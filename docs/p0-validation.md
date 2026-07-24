@@ -48,4 +48,4 @@ A disposable empty sibling directory repeated the README path:
 4. npm reports deferred install-script approval for `esbuild@0.25.12` and `vue-demi@0.13.11`; API generation, type checking, linting, and Vite still completed in this environment.
 5. The exact `v0.3.0` frontend source has three `git diff --check` findings: trailing whitespace in two design HTML files and a blank line at EOF in `src/views/personal/password.vue`.
 
-Reusable template findings are tracked upstream; application-specific P1–P4 work remains in this repository.
+Reusable template findings are tracked in [`TenonAdmin#22`](https://github.com/Tenon-Net/TenonAdmin/issues/22); application-specific P1–P4 work remains in this repository.
