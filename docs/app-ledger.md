@@ -11,13 +11,15 @@ This ledger owns the detailed implementation work for P1-P4. The strategic ledge
 
 ## P0: Consumer Bootstrap And Validation
 
-- [ ] Confirm the generated PackageReference is exactly `TenonAdmin` `0.3.0`.
-- [ ] Record `dotnet restore` and Release build evidence.
-- [ ] Record first SQLite startup, CodeFirst schema creation, and random super-admin password output.
-- [ ] Complete a real HTTP login and record `/health`, `/health/ready`, and `/openapi/v1.json` responses.
-- [ ] Install frontend dependencies, generate the API contract, type-check, lint, and complete a real browser login.
-- [ ] Reproduce the critical README path from an empty directory.
-- [ ] Record consumer findings. Only reusable kernel/template findings are eligible for a TenonAdmin dogfood issue.
+Status: complete on 2026-07-24. See [P0 validation](p0-validation.md).
+
+- [x] Confirm the generated PackageReference is exactly `TenonAdmin` `0.3.0`.
+- [x] Record `dotnet restore` and Release build evidence.
+- [x] Record first SQLite startup, CodeFirst schema creation, and random super-admin password output.
+- [x] Complete a real HTTP login and record `/health`, `/health/ready`, and `/openapi/v1.json` responses.
+- [x] Install frontend dependencies, generate the API contract, type-check, lint, and complete a real browser login.
+- [x] Reproduce the critical README path from an empty directory.
+- [x] Record consumer findings. Only reusable kernel/template findings are eligible for a TenonAdmin dogfood issue.
 
 ## P1: CRM Backend
 
