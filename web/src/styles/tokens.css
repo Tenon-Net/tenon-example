@@ -1,0 +1,139 @@
+/**
+ * TenonAdmin 设计 tokens —— 唯一色源(single source of truth)
+ * 来源:Claude Design 工程「设计系统 Design Tokens」(web/design-mockups/design-tokens.dc.html)提炼。
+ * spike/theme-refresh:色板整层换为 daisyUI(MIT)企业向主题 —— 亮色采 corporate、暗色采 business,
+ *   OKLCH 原值经 sRGB 转换(scripts 同 mix.ts 插值算法);圆角/字号/间距沿用本项目「更圆」体系不随 daisyUI(其 radius 4px/depth 0)。
+ *
+ * 分层:
+ *   1) 原语色板 --color-gray-* / 品牌主色 / 语义色基色 —— 固定值,不随主题翻转。
+ *   2) 角色令牌 --color-bg-* / --color-text-* / --color-border* / --color-fill* / --color-primary* / --color-mask
+ *      —— 语义化,随主题翻转:亮色在 :root,暗色在 [data-theme="dark"] 覆盖。业务只用角色令牌,不直接用原语。
+ *   3) 字号 / 间距 / 圆角 —— 与主题无关,仅在 :root。
+ *   4) 阴影 —— 亮色在 :root,暗色覆盖(暗底需更重)。
+ *
+ * 明暗切换:在 <html> 上打 data-theme="dark"(不打即亮色)。
+ */
+
+:root {
+  /* ── 原语:中性色阶(daisyUI corporate 系,纯中性灰 + 藏蓝墨色深端)──── */
+  --color-gray-900: #181A2A;  /* 主文字 / 标题(corporate base-content) */
+  --color-gray-800: #2F313F;  /* 正文加强 */
+  --color-gray-700: #5D5F6A;  /* 次级文字 */
+  --color-gray-600: #7B7C85;  /* 辅助文字 / 图标 */
+  --color-gray-500: #85868E;  /* 占位 / 说明文字(对比度加深档,≥3:1) */
+  --color-gray-400: #BABABF;  /* 禁用文字 */
+  --color-gray-300: #D1D1D1;  /* 重边框 / 分隔线(corporate base-300) */
+  --color-gray-200: #E3E3E3;  /* 常规边框 */
+  --color-gray-100: #F1F1F1;  /* 填充 / hover 底 */
+  --color-gray-50:  #F0F0F0;  /* 页面背景底(corporate base-200 柔化) */
+  --color-white:    #FFFFFF;
+
+  /* ── 原语:品牌主色(corporate 蓝,四档态;运行时由 useTheme 按 accent 重写)── */
+  --color-primary:         #0082CE;  /* 默认态 · 主按钮 / 链接 / 选中 */
+  --color-primary-hover:   #2996D6;  /* 悬浮 hover · 加亮一档 */
+  --color-primary-pressed: #006BA9;  /* 按下 pressed / active */
+  --color-primary-light:   #E6F3FA;  /* 浅底 · 选中背景 / 标签底 */
+
+  /* ── 原语:语义色(base + 浅底 light-bg,亮色;corporate 语义色,
+        warning/error 原值偏浅、按正文可读加深一档)─────────────── */
+  --color-success:        #00A43B;
+  --color-success-bg:     #E0F4E7;
+  --color-warning:        #A88400;
+  --color-warning-bg:     #FFF8E0;
+  --color-danger:         #D15054;
+  --color-danger-bg:      #FFECED;
+  --color-info:           #0090B5;
+  --color-info-bg:        #E0F2F6;
+
+  /* ── 角色令牌(亮色主题)—— 业务只消费这一层 ─────────────────── */
+  --color-bg-body:        #F0F0F0;  /* 页面背景 / 画布 */
+  --color-bg-container:   #FFFFFF;  /* 卡片 / 面板容器 */
+  --color-bg-elevated:    #FFFFFF;  /* 弹层 / 下拉 / 抽屉 */
+  --color-text-primary:   #181A2A;  /* 主文字 / 标题 */
+  --color-text-secondary: #5D5F6A;  /* 次级文字 */
+  --color-text-tertiary:  #85868E;  /* 占位 / 辅助文字(白底 3.6:1,AA-large) */
+  --color-text-disabled:  #BABABF;  /* 禁用文字 */
+  --color-border:         #E3E3E3;  /* 常规边框 / 分隔 */
+  --color-border-strong:  #D1D1D1;  /* 强调边框 / 输入描边 */
+  --color-fill:           #F1F1F1;  /* 填充 / 表头 / hover 底 */
+  --color-fill-hover:     #EAEAEA;  /* 行 hover / 悬浮填充 */
+  --color-mask:           rgba(24, 26, 42, 0.45);  /* 遮罩 / 弹窗背景 */
+  --color-header-bg:      rgba(255, 255, 255, 0.82);  /* 顶栏底(配 backdrop-filter: blur(12px)) */
+
+  /* ── 字体 ──────────────────────────────────────────────── */
+  --font-family-base: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-family-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  /* 字号阶梯(px / 行高px / 字重),正文默认 14/22 */
+  --font-size-xs:   12px;  --line-height-xs:   18px;  /* 角标 / 表格次要信息  w400 */
+  --font-size-sm:   13px;  --line-height-sm:   20px;  /* 次级说明 / 密集表格  w400 */
+  --font-size-base: 14px;  --line-height-base: 22px;  /* 正文(默认)         w400 */
+  --font-size-md:   16px;  --line-height-md:   24px;  /* 强调正文 / 卡片标题  w500 */
+  --font-size-lg:   20px;  --line-height-lg:   28px;  /* 小标题 / 弹窗标题    w600 */
+  --font-size-xl:   24px;  --line-height-xl:   32px;  /* 页面主标题          w600 */
+
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+
+  /* ── 间距:4px 基准网格 ────────────────────────────────────── */
+  --space-4:  4px;
+  --space-8:  8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+
+  /* ── 圆角(design_handoff_rbac_admin:更圆)──────────────── */
+  --radius-sm: 6px;   /* 标签 / 小控件 */
+  --radius-md: 10px;  /* 按钮 / 输入 / 表格单元 */
+  --radius-lg: 12px;  /* 卡片 / 面板 / 弹层 */
+  --radius-xl: 16px;  /* 登录卡 / 大面板 */
+
+  /* ── 阴影(亮色)三级(墨色随 corporate base-content 微调)──────── */
+  --shadow-1: 0 1px 2px rgba(24, 26, 42, 0.05), 0 2px 6px rgba(24, 26, 42, 0.06);  /* 卡片 card */
+  --shadow-2: 0 10px 30px rgba(24, 26, 42, 0.12);                                  /* 弹层 popover / 卡片 hover 上浮 */
+  --shadow-3: 0 16px 48px rgba(24, 26, 42, 0.18);                                  /* 悬浮 overlay / 抽屉 */
+
+  /* ── 过渡 ──────────────────────────────────────────────── */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+}
+
+/* ══════════════════════════════════════════════════════════
+   暗色主题(daisyUI business):只覆盖会翻转的角色令牌 / 主色 / 语义色 / 阴影。
+   原语灰阶、字号、间距、圆角保持不变。
+   ══════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] {
+  /* 主色(corporate 蓝暗底提亮一档;运行时由 useTheme 按 accent 重写) */
+  --color-primary:         #2E99D7;
+  --color-primary-hover:   #4FA9DD;
+  --color-primary-pressed: #267DB0;
+  --color-primary-light:   #233641;
+
+  /* 语义色(business;error 原值过暗、提亮一档保可读) */
+  --color-success:    #6BB187;  --color-success-bg: #2F3D35;
+  --color-warning:    #DBAE5A;  --color-warning-bg: #453C2C;
+  --color-danger:     #C16E65;  --color-danger-bg:  #3C2623;
+  --color-info:       #0291D5;  --color-info-bg:    #1A3744;
+
+  /* 角色令牌(暗色:business base-200 画布 / base-100 容器) */
+  --color-bg-body:        #1C1C1C;
+  --color-bg-container:    #202020;
+  --color-bg-elevated:     #292929;
+  --color-text-primary:    #CDCDCD;
+  --color-text-secondary:  #999999;
+  --color-text-tertiary:   #6E6E6E;
+  --color-text-disabled:   #545454;
+  --color-border:          #363636;
+  --color-border-strong:   #4D4D4D;
+  --color-fill:            #2B2B2B;
+  --color-fill-hover:      #343434;
+  --color-mask:            rgba(0, 0, 0, 0.65);
+  --color-header-bg:       rgba(32, 32, 32, 0.82);  /* 顶栏底(配 blur) */
+
+  /* 阴影(暗底需更重) */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 10px 30px rgba(0, 0, 0, 0.44);
+  --shadow-3: 0 16px 48px rgba(0, 0, 0, 0.52);
+}
