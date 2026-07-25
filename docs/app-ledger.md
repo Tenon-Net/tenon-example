@@ -27,12 +27,16 @@ Status: complete on 2026-07-24. See [P0 validation](p0-validation.md).
 
 ## P1: CRM Backend
 
-- [ ] Add the CRM consumer module with `code=crm`, `ModuleId=1000`, its default route, and menu ownership.
-- [ ] Add `Customer` as a `DataEntity` with name, contact, phone, intended amount, and status. Do not set organization or creator anchors in service code; the runtime AOP does that for interactive writes.
-- [ ] Implement models, service contract, service, consumer error-code constants from `60000`, DI registration, and an `api/v1/biz/customer` controller guarded by `[RolePermission]`.
-- [ ] Keep `CustomerService` free of manual organization IDs, `CreateOrgId`, and organization `WHERE` clauses.
-- [ ] Add CRUD, paging, and data-scope write-guard integration tests. Set restricted `IDataScopeContext` directly and prove cross-scope read, update, and delete are blocked without conflating missing permission with data-scope protection.
-- [ ] Add `GET /api/v1/biz/customer/scope` with `[RolePermission]`. Return a structured DTO, not localized text; include the semantic range needed for frontend zh/en composition.
+Status: complete on 2026-07-24.
+
+- [x] Add the CRM consumer module with `code=crm`, `ModuleId=1000`, its default route, and menu ownership. `Modules/Crm/CrmModuleSeed.cs` registers the `SysModule` row (`Id=1000`, `DefaultRoute=/crm/customer`, `ApiPrefix=biz`); no menu rows yet — those are seeded in P2, not code.
+- [x] Add `Customer` as a `DataEntity` with name, contact, phone, intended amount, and status. No organization or creator anchors are set in service code; the runtime AOP fills them.
+- [x] Implement models, service contract, service, consumer error-code constants from `60000`, DI registration, and an `api/v1/biz/customer` controller guarded by `[RolePermission]`. `BizErrorCode.CustomerNotFound = 60001`.
+- [x] Keep `CustomerService` free of manual organization IDs, `CreateOrgId`, and organization `WHERE` clauses. Confirmed by static grep — the only match is the class's own doc comment stating the guarantee.
+- [x] Add CRUD, paging, and data-scope write-guard integration tests. `tests/tenon-example.Tests` (new xUnit project, raw `ServiceCollection` + direct `IDataScopeContext.Current` mutation, no HTTP layer — so `[RolePermission]`'s 403 never enters the picture): 12 tests, all green. Cross-org `GetAsync`/`UpdateAsync`/`DeleteAsync` all throw `CustomerNotFound`; same-org succeeds; `PageAsync` excludes out-of-scope rows.
+- [x] Add `GET /api/v1/biz/customer/scope` with `[RolePermission]`. Returns a structured `CustomerScopeDto` (`Kind`/`OrgName`/`VisibleOrgCount`/`IncludeSelf`, no text) computed from `IDataScopeContext.Current` + the full org tree (`IOrgService.ListAsync()`). Covered by 8 theory cases: unrestricted, root-and-descendants, single leaf org, disjoint leaves, a non-covering partial subtree (must not misclassify as "and below"), and `IncludeSelf` alone and combined.
+
+Manual end-to-end verification: `dotnet run` (plain, no env override — proves the P0/0.3.2 launch-profile fix holds), real login, full add/get/page/update/delete/not-found cycle over HTTP with `curl`, and `/openapi/v1.json` exposing all five `customer` routes. Release build: 0 warnings, 0 errors.
 
 ## P2: CRM Seeds
 

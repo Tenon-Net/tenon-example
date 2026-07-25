@@ -11,4 +11,9 @@
     <PackageReference Include="TenonAdmin" Version="0.3.2" />
   </ItemGroup>
 
+  <!-- tests/ 是独立测试工程(自己的 .csproj),不并入本项目的隐式 Compile 通配。 -->
+  <ItemGroup>
+    <Compile Remove="tests/**" />
+  </ItemGroup>
+
 </Project>
