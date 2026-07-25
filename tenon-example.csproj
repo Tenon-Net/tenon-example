@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <!-- 元包:一引全栈(Core + SqlSugar + Services + AspNetCore)。 -->
-    <PackageReference Include="TenonAdmin" Version="0.3.1" />
+    <PackageReference Include="TenonAdmin" Version="0.3.2" />
   </ItemGroup>
 
 </Project>

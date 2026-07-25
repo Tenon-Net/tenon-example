@@ -2,12 +2,12 @@
 
 ## Provenance
 
-- Stable package release: `0.3.1`
-- TenonAdmin source: tag `v0.3.1`, commit `bc7a1eecbf64a7e2adcd0ee10225e0c6c6cafae1`
-- Backend template: `TenonAdmin.Templates@0.3.1`
-- Frontend source: `Tenon-Net/TenonAdmin/web#v0.3.1`
+- Stable package release: `0.3.2`
+- TenonAdmin source: tag `v0.3.2`, commit `14a5b352a78c512f2b9ba3b4de6361c93103b4cd`
+- Backend template: `TenonAdmin.Templates@0.3.2`
+- Frontend source: `Tenon-Net/TenonAdmin/web#v0.3.2`
 
-P0 was first validated against `0.3.0`; the upgrade to `0.3.1` and the full gate re-run are recorded in [v0.3.1 revalidation](v0.3.1-revalidation.md).
+P0 was first validated against `0.3.0`; the upgrade to `0.3.1` and the full gate re-run are recorded in [v0.3.1 revalidation](v0.3.1-revalidation.md). `0.3.2` shipped the upstream fix for the second dogfood finding (missing launch profile); the upgrade and adoption of the real fix over the interim workaround are recorded in [v0.3.2 upgrade](v0.3.2-upgrade.md).
 
 This ledger owns the detailed implementation work for P1-P4. The strategic ledger and kernel/template dogfood intake remain in `TenonAdmin`.
 
@@ -23,6 +23,7 @@ Status: complete on 2026-07-24. See [P0 validation](p0-validation.md).
 - [x] Reproduce the critical README path from an empty directory.
 - [x] Record consumer findings. Only reusable kernel/template findings are eligible for a TenonAdmin dogfood issue.
 - [x] Upgrade to `0.3.1` and re-run every gate after the upstream fixes shipped, including `npm ci`, `npm audit`, tests, and the production build.
+- [x] Upgrade to `0.3.2` and adopt the shipped `Properties/launchSettings.json` fix in place of the interim environment-variable workaround; re-run every gate including a plain `dotnet run`.
 
 ## P1: CRM Backend
 
