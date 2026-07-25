@@ -40,11 +40,15 @@ Manual end-to-end verification: `dotnet run` (plain, no env override — proves 
 
 ## P2: CRM Seeds
 
-- [ ] Seed the fixed organization tree and customer counts: headquarters 214; South China 128 consisting of Shenzhen 42, Guangzhou 43, and Dongguan 43; North China Beijing 43 and Tianjin 43.
-- [ ] Seed three non-super-admin trial users: headquarters `All`, South China `OrgAndChildren`, and Shenzhen `Org`. All use `DefaultModuleId=1000`, `MustChangePassword=false`, a non-null `LastPasswordChangeTime`, no phone binding, and `Enabled=true`.
-- [ ] Seed CRM module `code=crm`, `ModuleId=1000`, default route, menu ownership, roles, role data scopes, user roles, and explicit GET permissions for customer page, detail, and scope endpoints.
-- [ ] Keep consumer-owned fixed IDs in `1000-1999`, unique within each entity. Register idempotent `ISeedData` implementations and explicitly set `CreateOrgId` and `CreateUserId` for customer seeds.
-- [ ] Prove two initializations of the same database do not drift. Prove the three accounts return `214`, `128`, and `42` from the same customer page endpoint and cannot see cross-scope details; retain P1 write-guard coverage.
+Status: complete on 2026-07-24.
+
+- [x] Seed the fixed organization tree and customer counts: headquarters 214; South China 128 consisting of Shenzhen 42, Guangzhou 43, and Dongguan 43; North China Beijing 43 and Tianjin 43. `Modules/Crm/Seeds/CrmOrgSeed.cs` (8 orgs, HQ → South/North → 5 branch leaves) + `CrmCustomerSeed.cs` (214 rows generated deterministically per branch, not hand-written literals).
+- [x] Seed three non-super-admin trial users: headquarters `All`, South China `OrgAndChildren`, and Shenzhen `Org`. All use `DefaultModuleId=1000`, `MustChangePassword=false`, a non-null `LastPasswordChangeTime`, no phone binding, and `Enabled=true`. `CrmUserSeed.cs`; shared demo password `Trial@123456` (local/evaluation use only, hashed at rest). `Org`/`OrgAndChildren` resolve against each user's own `OrgId` (kernel `DataScopeProvider` convention), so the org binding lives on the user, not the role.
+- [x] Seed CRM module `code=crm`, `ModuleId=1000` (P1's `CrmModuleSeed`), default route, menu ownership (`CrmMenuSeed.cs`: one page node + 3 read-only button nodes), roles (`CrmRoleSeed.cs`), role data scopes (`CrmRoleDataScopeSeed.cs`), user roles (`CrmUserRoleSeed.cs`), and explicit GET permissions for customer page, detail, and scope endpoints granted to all three roles (`CrmRoleMenuSeed.cs`) — the three accounts differ only in data scope, not in feature permissions.
+- [x] Keep consumer-owned fixed IDs in `1000-1999`, unique within each entity (customers occupy `1000-1213`). All 9 seed classes are idempotent `ISeedData` implementations (join tables declare `DedupColumns`); `CrmCustomerSeed` explicitly sets `CreateOrgId`/`CreateUserId` per row since there is no login context at seed time.
+- [x] Prove two initializations of the same database do not drift. Prove the three accounts return `214`, `128`, and `42` from the same customer page endpoint and cannot see cross-scope details; retain P1 write-guard coverage. Automated: `CrmSeedIdempotencyTests` boots the real `AddTenonAdmin` host twice against the same SQLite file (so `DatabaseInitializer` actually runs, not a hand-rolled `CodeFirst.InitTables`), asserts identical row counts and an unchanged password hash across both runs, and asserts `214`/`128`/`42` after each. (Caught along the way: `AddTenonAdmin` swaps in `HttpContextDataScopeContext`, whose setter silently no-ops outside a real HTTP request — a test-only footgun, not a product bug — worked around by re-registering the plain in-memory `IDataScopeContext` after `AddTenonAdmin`.)
+
+Manual end-to-end verification: real `dotnet run` (26 entities, 429 seed rows on first boot, 0 new rows on a second boot against the same file), real logins as all three trial accounts, `page`/`scope` totals matching 214/128/42, and a cross-scope detail request from the Shenzhen account returning `CustomerNotFound`. 13/13 automated tests green; Release build 0 warnings, 0 errors.
 
 ## P3: Vue CRM Experience
 

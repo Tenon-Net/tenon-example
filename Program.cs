@@ -4,6 +4,7 @@ using TenonAdmin.Services;
 using TenonAdmin.SqlSugar;
 using tenon_example.Modules;
 using tenon_example.Modules.Crm;
+using tenon_example.Modules.Crm.Seeds;
 
 // TenonAdmin 消费方 host。首次启动控制台会打印随机超管密码,用它登录。
 // 加业务模块:复制 Modules/SampleDoc* 四件套改名,并在下方追加一行 TryAddScoped。
@@ -19,6 +20,14 @@ builder.Services.TryAddScoped<ISampleDocService, SampleDocService>();
 // CRM 模块(§2 头条:多机构数据范围)。
 builder.Services.TryAddScoped<ICustomerService, CustomerService>();
 builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmModuleSeed>());
+builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmOrgSeed>());
+builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmRoleSeed>());
+builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmRoleDataScopeSeed>());
+builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmUserSeed>());
+builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmUserRoleSeed>());
+builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmMenuSeed>());
+builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmRoleMenuSeed>());
+builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmCustomerSeed>());
 
 var app = builder.Build();
 app.MapTenonAdmin();

@@ -7,13 +7,13 @@ namespace tenon_example.Modules.Crm;
 /// CRM 模块注册种子——固定 <see cref="ModuleId"/> 幂等锚点,供 P2 的角色/用户/菜单种子引用。
 /// 只登记模块本身(门户侧边栏分区),不预置菜单树:业务模块的菜单通常经后台「菜单管理」UI 添加。
 /// </summary>
-internal sealed class CrmModuleSeed : ISeedData<SysModule>
+public sealed class CrmModuleSeed : ISeedData<SysModule>
 {
     /// <summary>CRM 模块固定主键(种子幂等锚点)</summary>
-    internal const long ModuleId = 1000;
+    public const long ModuleId = 1000;
 
     /// <summary>CRM 模块编码</summary>
-    internal const string ModuleCode = "crm";
+    public const string ModuleCode = "crm";
 
     /// <summary>模块登记随内核/consumer 升级同步(允许改标题/图标等元数据)</summary>
     public bool SyncOnUpgrade => true;
