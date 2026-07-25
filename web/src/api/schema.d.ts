@@ -136,6 +136,220 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/biz/customer/page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Name?: string;
+                    Current?: number | string;
+                    Size?: number | string;
+                    SortField?: string;
+                    SortOrder?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultOfPagedListOfCustomer"];
+                        "application/json": components["schemas"]["ResultOfPagedListOfCustomer"];
+                        "text/json": components["schemas"]["ResultOfPagedListOfCustomer"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/biz/customer/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number | string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultOfCustomer"];
+                        "application/json": components["schemas"]["ResultOfCustomer"];
+                        "text/json": components["schemas"]["ResultOfCustomer"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number | string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CustomerInput"];
+                    "text/json": components["schemas"]["CustomerInput"];
+                    "application/*+json": components["schemas"]["CustomerInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultOfboolean"];
+                        "application/json": components["schemas"]["ResultOfboolean"];
+                        "text/json": components["schemas"]["ResultOfboolean"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number | string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultOfboolean"];
+                        "application/json": components["schemas"]["ResultOfboolean"];
+                        "text/json": components["schemas"]["ResultOfboolean"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/biz/customer/add": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CustomerInput"];
+                    "text/json": components["schemas"]["CustomerInput"];
+                    "application/*+json": components["schemas"]["CustomerInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultOflong"];
+                        "application/json": components["schemas"]["ResultOflong"];
+                        "text/json": components["schemas"]["ResultOflong"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/biz/customer/scope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultOfCustomerScopeDto"];
+                        "application/json": components["schemas"]["ResultOfCustomerScopeDto"];
+                        "text/json": components["schemas"]["ResultOfCustomerScopeDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/captcha": {
         parameters: {
             query?: never;
@@ -5090,6 +5304,48 @@ export interface components {
             /** @description 备注 */
             remark?: null | string;
         };
+        Customer: {
+            name?: string;
+            contact?: string;
+            phone?: null | string;
+            /** Format: double */
+            intendedAmount?: number | string;
+            status?: components["schemas"]["CustomerStatus"];
+            /**
+             * Format: int64
+             * @description 归属机构 Id(数据范围锚点)= 创建者当时所属机构。插入时由审计 AOP 从 `ICurrentUser.OrgId`(令牌 org claim)自动填充,
+             *     T3 数据范围过滤器按它 + 当前用户的范围规则决定行可见性。为 null 表示不受机构范围约束(系统内建数据、或创建者无归属机构)。
+             */
+            createOrgId?: null | number | string;
+            isDelete?: boolean;
+            /** Format: date-time */
+            createTime?: string;
+            /** Format: int64 */
+            createUserId?: null | number | string;
+            /** Format: date-time */
+            updateTime?: null | string;
+            /** Format: int64 */
+            updateUserId?: null | number | string;
+            /** Format: int64 */
+            id?: number | string;
+        };
+        CustomerInput: {
+            name?: string;
+            contact?: string;
+            phone?: null | string;
+            /** Format: double */
+            intendedAmount?: number | string;
+            status?: components["schemas"]["CustomerStatus"];
+        };
+        CustomerScopeDto: {
+            kind: components["schemas"]["CustomerScopeKind"];
+            orgName?: null | string;
+            /** Format: int32 */
+            visibleOrgCount?: number | string;
+            includeSelf?: boolean;
+        };
+        CustomerScopeKind: number;
+        CustomerStatus: number;
         /**
          * @description 工作台首页统计(设计 §4)。形状直接对齐前端图表组件:
          *     折线图收 `categories: string[]` + 两条 `number[]`,饼图的"资源分布"就是前三个计数,前端自行拼装。
@@ -5433,6 +5689,34 @@ export interface components {
             sort?: number | string;
             /** @description 是否启用 */
             enabled?: boolean;
+        };
+        /**
+         * @description 分页结果模型(设计 §5.7)——所有分页查询的统一返回。ORM 中立(放 Core),
+         *     SqlSugar 侧的 `ToPagedListAsync` 扩展负责把查询物化成它。
+         */
+        PagedListOfCustomer: {
+            /**
+             * Format: int32
+             * @description 当前页码(从 1 起)
+             */
+            current?: number | string;
+            /**
+             * Format: int32
+             * @description 每页条数
+             */
+            size?: number | string;
+            /**
+             * Format: int32
+             * @description 总记录数
+             */
+            total?: number | string;
+            /**
+             * Format: int32
+             * @description 总页数(向上取整;Size 为 0 时为 0)
+             */
+            pages?: number | string;
+            /** @description 当前页数据 */
+            items?: components["schemas"]["Customer"][];
         };
         /**
          * @description 分页结果模型(设计 §5.7)——所有分页查询的统一返回。ORM 中立(放 Core),
@@ -6001,6 +6285,48 @@ export interface components {
          *     成功:`{ "code": 0, "msgKey": "common.success", "data": {...} }`<br />
          *     失败:`{ "code": 40001, "msgKey": "error.auth.passwordWrong", "args": {}, "message": "...", "data": null }`</example>
          */
+        ResultOfCustomer: {
+            /**
+             * Format: int32
+             * @description 业务码,0 为成功,其余见 ErrorCode 分段
+             */
+            code?: number | string;
+            /** @description 语义键(前端 i18n 语言包的键),如 `error.auth.passwordWrong` */
+            msgKey?: null | string;
+            /** @description 文案插值参数,与语言包模板占位符对应;无参数时为 null(序列化省略) */
+            args?: null | Record<string, never>;
+            /** @description 兜底文案(仅降级用途,浏览器端一律走 MsgKey 翻译) */
+            message?: null | string;
+            data?: null | components["schemas"]["Customer"];
+        };
+        /**
+         * @description 统一返回模型(设计 §6/§13.2)——所有接口的响应外壳。
+         *     字段分工:Code 给机器判断;MsgKey+Args 给前端 i18n 渲染;
+         *     Message 是后端兜底文案(非浏览器调用方降级用,浏览器端应忽略它);Data 为业务载荷。<example>
+         *     成功:`{ "code": 0, "msgKey": "common.success", "data": {...} }`<br />
+         *     失败:`{ "code": 40001, "msgKey": "error.auth.passwordWrong", "args": {}, "message": "...", "data": null }`</example>
+         */
+        ResultOfCustomerScopeDto: {
+            /**
+             * Format: int32
+             * @description 业务码,0 为成功,其余见 ErrorCode 分段
+             */
+            code?: number | string;
+            /** @description 语义键(前端 i18n 语言包的键),如 `error.auth.passwordWrong` */
+            msgKey?: null | string;
+            /** @description 文案插值参数,与语言包模板占位符对应;无参数时为 null(序列化省略) */
+            args?: null | Record<string, never>;
+            /** @description 兜底文案(仅降级用途,浏览器端一律走 MsgKey 翻译) */
+            message?: null | string;
+            data?: null | components["schemas"]["CustomerScopeDto"];
+        };
+        /**
+         * @description 统一返回模型(设计 §6/§13.2)——所有接口的响应外壳。
+         *     字段分工:Code 给机器判断;MsgKey+Args 给前端 i18n 渲染;
+         *     Message 是后端兜底文案(非浏览器调用方降级用,浏览器端应忽略它);Data 为业务载荷。<example>
+         *     成功:`{ "code": 0, "msgKey": "common.success", "data": {...} }`<br />
+         *     失败:`{ "code": 40001, "msgKey": "error.auth.passwordWrong", "args": {}, "message": "...", "data": null }`</example>
+         */
         ResultOfDashboardSummaryOutput: {
             /**
              * Format: int32
@@ -6434,6 +6760,27 @@ export interface components {
             message?: null | string;
             /** @description 业务数据载荷 */
             data?: unknown;
+        };
+        /**
+         * @description 统一返回模型(设计 §6/§13.2)——所有接口的响应外壳。
+         *     字段分工:Code 给机器判断;MsgKey+Args 给前端 i18n 渲染;
+         *     Message 是后端兜底文案(非浏览器调用方降级用,浏览器端应忽略它);Data 为业务载荷。<example>
+         *     成功:`{ "code": 0, "msgKey": "common.success", "data": {...} }`<br />
+         *     失败:`{ "code": 40001, "msgKey": "error.auth.passwordWrong", "args": {}, "message": "...", "data": null }`</example>
+         */
+        ResultOfPagedListOfCustomer: {
+            /**
+             * Format: int32
+             * @description 业务码,0 为成功,其余见 ErrorCode 分段
+             */
+            code?: number | string;
+            /** @description 语义键(前端 i18n 语言包的键),如 `error.auth.passwordWrong` */
+            msgKey?: null | string;
+            /** @description 文案插值参数,与语言包模板占位符对应;无参数时为 null(序列化省略) */
+            args?: null | Record<string, never>;
+            /** @description 兜底文案(仅降级用途,浏览器端一律走 MsgKey 翻译) */
+            message?: null | string;
+            data?: null | components["schemas"]["PagedListOfCustomer"];
         };
         /**
          * @description 统一返回模型(设计 §6/§13.2)——所有接口的响应外壳。

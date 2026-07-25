@@ -52,10 +52,14 @@ Manual end-to-end verification: real `dotnet run` (26 entities, 429 seed rows on
 
 ## P3: Vue CRM Experience
 
-- [ ] Build the CRM list and form in `web/`, including complete zh/en i18n, menu integration, and permission wiring. Do not add React.
-- [ ] Compose the current range label from the scope DTO and the paging total. Do not hard-code account names or infer an original `ScopeType` from a merged context.
-- [ ] Express all organizations, a root organization and descendants, one organization, specified organizations, and `IncludeSelf` consistently from the DTO in both locales.
-- [ ] Verify generated API, type checking, linting, and real logins for the three accounts. Confirm the expected scope labels and totals `214 / 128 / 42`.
+Status: complete on 2026-07-24.
+
+- [x] Build the CRM list and form in `web/`, including complete zh/en i18n, menu integration, and permission wiring. Do not add React. Business-module file placement per `skills/create-crud-frontend.md` (new files only, upstream-owned files untouched): `types/crm.ts`, `api/crm.ts`, `locales/ext/{zh-CN,en-US}/crm.ts`, `views/crm/customer/index.vue`. Menu integration needs no route code — `CrmMenuSeed`'s `Component="crm/customer/index"` (seeded in P2) resolves directly to this file via the dynamic-route mechanism.
+- [x] Compose the current range label from the scope DTO and the paging total. Do not hard-code account names or infer an original `ScopeType` from a merged context. The page calls `customerApi.scope()` once on mount and rebuilds the label from `ProTable`'s `@loaded` total — never from the logged-in account name.
+- [x] Express all organizations, a root organization and descendants, one organization, specified organizations, and `IncludeSelf` consistently from the DTO in both locales. `scopeLabel()` switches on `CustomerScopeKind` (`All`/`OrgAndChildren`/`Org`/`Specified`/`None`) and composes `IncludeSelf` orthogonally (`{scope} + 本人` / `仅本人`), matching the backend's `ComputeScope` semantics exactly since both share the same five-way classification.
+- [x] Verify generated API, type checking, linting, and real logins for the three accounts. Confirm the expected scope labels and totals `214 / 128 / 42`. `npm run gen:api` + `typecheck` + `lint` + production `build` all clean. Real Playwright Chromium runs against the dev server for all three trial accounts confirmed the exact scope text (`全部组织`, `华南大区 及以下`, `深圳分公司`) and totals (`214`/`128`/`42`) in the rendered page, and — a gap the skill's own reference template doesn't cover — that `新增`/`编辑`/`删除` are hidden for all three (they hold only the three GET permissions seeded in P2) while `superAdmin` sees full CRUD after selecting the CRM tile from the multi-app portal (fail-open bypass).
+
+Consumer finding (page-scoped, not a kernel bug): the SqlSugar/AspNetCore layer has no SignalR hub wired for the notification bell in this minimal consumer host, so the browser console logs repeated negotiation-404 errors after login. Pre-existing in the template, unrelated to CRM; not fixed here since it's out of P3's scope.
 
 ## P4: Public Demo And Narrative
 
