@@ -57,7 +57,7 @@ MySQL、Redis、本バックエンド、そして Caddy でホストされた `w
 
 ## CRM モジュール:マルチ組織データスコープの実演
 
-同じ `GET /api/v1/biz/customer/page` リクエストでも、ログインしたユーザーによって返される行数が変わります。しかも `CustomerService` には組織フィルタリングのコードは一切書かれていません——すべてカーネルのグローバルクエリフィルターが行っています。**[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)** で実際に試すか、自分で実行して以下のいずれかの体験用アカウントでログインし、**客户管理 / Customers** を開いてください:
+同じ `GET /api/v1/biz/customer/page` リクエストでも、ログインしたユーザーによって返される行数が変わります。しかも `CustomerService` には組織フィルタリングのコードは一切書かれていません——すべてカーネルのグローバルクエリフィルターが行っています。**[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)** で実際に試すか、自分で実行して以下のいずれかの体験用アカウントでログインし、**客户管理 / Customers** を開いてください。仕組みの詳細な解説(中国語)は[ショーケース記事](docs/showcase-multi-org-data-scope.md)を参照してください。
 
 | アカウント | パスワード | データスコープ | 表示行数 | その他 |
 | --- | --- | --- | --- | --- |

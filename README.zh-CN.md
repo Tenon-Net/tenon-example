@@ -57,7 +57,7 @@ docker compose up -d --build
 
 ## CRM 模块:多组织数据权限实战
 
-同一个 `GET /api/v1/biz/customer/page` 请求,根据登录者不同会返回不同的行数,而 `CustomerService` 里没有任何手写的组织过滤逻辑——都是内核的全局查询过滤器在起作用。可以直接在 **[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)** 上体验,也可以自己跑起来:用下面任意一个体验账号登录,打开 **客户管理 / Customers**:
+同一个 `GET /api/v1/biz/customer/page` 请求,根据登录者不同会返回不同的行数,而 `CustomerService` 里没有任何手写的组织过滤逻辑——都是内核的全局查询过滤器在起作用。可以直接在 **[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)** 上体验,也可以自己跑起来:用下面任意一个体验账号登录,打开 **客户管理 / Customers**。这套机制的完整拆解见[《同一个页面,不同的行数》](docs/showcase-multi-org-data-scope.md)。
 
 | 账号 | 密码 | 数据范围 | 可见行数 | 还能看到 |
 | --- | --- | --- | --- | --- |

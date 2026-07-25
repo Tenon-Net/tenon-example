@@ -57,7 +57,7 @@ Builds and runs the full stack: MySQL, Redis, this backend, and a Caddy-fronted 
 
 ## CRM Module: Multi-Org Data Scope In Action
 
-The same `GET /api/v1/biz/customer/page` request returns a different row count depending on who is logged in, and `CustomerService` contains zero manual organization filtering — the kernel's global query filter does it. Try it live at **[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)**, or run it yourself: log in with any of the trial accounts below and open **客户管理 / Customers**:
+The same `GET /api/v1/biz/customer/page` request returns a different row count depending on who is logged in, and `CustomerService` contains zero manual organization filtering — the kernel's global query filter does it. Try it live at **[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)**, or run it yourself: log in with any of the trial accounts below and open **客户管理 / Customers**. For a full walkthrough of how this works (in Chinese), see [the showcase article](docs/showcase-multi-org-data-scope.md).
 
 | Account | Password | Data scope | Rows visible | Also see |
 | --- | --- | --- | --- | --- |
