@@ -63,11 +63,13 @@ Consumer finding (page-scoped, not a kernel bug): the SqlSugar/AspNetCore layer 
 
 ## P4: Public Demo And Narrative
 
-- [ ] Obtain separate explicit authorization before replacing any production domain or deployment. P0-P3 do not authorize deployment.
-- [ ] Configure public DemoMode, read-only CRM permissions, hidden write affordances, server-side write rejection, and a repeatable account-state recovery process.
-- [ ] Provide the three trial accounts and a concise first-screen instruction showing how the same customer page changes by account.
-- [ ] Capture the three-account comparison and add the real-app entry point to documentation.
-- [ ] Verify health, login, customer paging, rollback, and the two-minute unauthenticated discovery path.
+Status: local verification complete on 2026-07-24; actual deployment not authorized (see below).
+
+- [ ] Obtain separate explicit authorization before replacing any production domain or deployment. P0-P3 do not authorize deployment. **Not requested; not done.**
+- [x] Configure public DemoMode, read-only CRM permissions, hidden write affordances, server-side write rejection, and a repeatable account-state recovery process. `TenonAdmin:DemoMode` is a pre-existing kernel switch (`DemoModeFilter`), not something this app implements — verified locally with `TenonAdmin__DemoMode=true`: reads (login, `page`, `scope`) keep working, every non-`GET` request is rejected with code `41002` for both a trial account and `superAdmin` (global filter, no super-admin bypass). Write affordances are already hidden for the three trial accounts from P3 (permission-driven, not DemoMode-driven — they hold only GET permissions regardless of this flag). Account-state recovery: reseeding is already idempotent (P2); a real reset process for a live public deployment is deployment-specific and deferred to the actual deploy step, not something to design against an untested target.
+- [x] Provide the three trial accounts and a concise first-screen instruction showing how the same customer page changes by account. Documented in the [README](../README.md)'s new "CRM Module" section (account/scope/row-count table + the shared password).
+- [x] Capture the three-account comparison and add the real-app entry point to documentation. Three screenshots (`docs/assets/{hq-admin-214,south-manager-128,shenzhen-specialist-42}.png`) embedded in the README, one per account, each showing the scope banner and row count.
+- [ ] Verify health, login, customer paging, rollback, and the two-minute unauthenticated discovery path. Health/login/paging are already covered end-to-end by P0-P3; rollback and the unauthenticated discovery path are meaningful only against a real deployment target and are deferred to the actual deploy step.
 
 ## Commit Policy
 
