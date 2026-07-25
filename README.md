@@ -53,19 +53,20 @@ Builds and runs the full stack: MySQL, Redis, this backend, and a Caddy-fronted 
 
 ## CRM Module: Multi-Org Data Scope In Action
 
-The same `GET /api/v1/biz/customer/page` request returns a different row count depending on who is logged in, and `CustomerService` contains zero manual organization filtering — the kernel's global query filter does it. Try it live at **[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)**, or run it yourself: log in with any of the three seeded trial accounts (password `Trial@123456` for all three) and open **客户管理 / Customers**:
+The same `GET /api/v1/biz/customer/page` request returns a different row count depending on who is logged in, and `CustomerService` contains zero manual organization filtering — the kernel's global query filter does it. Try it live at **[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)**, or run it yourself: log in with any of the trial accounts below and open **客户管理 / Customers**:
 
-| Account | Data scope | Rows visible |
-| --- | --- | --- |
-| `总部管理员` (HQ admin) | All organizations | 214 |
-| `华南区域经理` (South China regional manager) | South China region and below | 128 |
-| `深圳专员` (Shenzhen specialist) | Shenzhen branch only | 42 |
+| Account | Password | Data scope | Rows visible | Also see |
+| --- | --- | --- | --- | --- |
+| `总部管理员` (HQ admin) | `Trial@123456` | All organizations | 214 | Full **系统 (system)** admin console — org/user/role/menu/dict/config/log/file management, a real granted role (not `superAdmin` bypass) |
+| `华南区域经理` (South China regional manager) | `Trial@123456` | South China region and below | 128 | CRM only |
+| `深圳专员` (Shenzhen specialist) | `Trial@123456` | Shenzhen branch only | 42 | CRM only |
+| `superAdmin` | `TenonExample@675b52d8` | Unrestricted (bypasses scope) | 214 | Every module (系统 + crm + the kernel's sample 业务 module), full CRUD everywhere |
 
 ![HQ admin sees all 214 rows](docs/assets/hq-admin-214.png)
 ![South China manager sees 128 rows, scoped to the region and its branches](docs/assets/south-manager-128.png)
 ![Shenzhen specialist sees only their own 42 rows](docs/assets/shenzhen-specialist-42.png)
 
-All three accounts hold only read permissions on the customer endpoints (seeded in [P2](docs/app-ledger.md)), so the add/edit/delete controls are absent for them and present only for `superAdmin` — a real permission difference, not a client-side hint.
+The three business-role accounts hold only read permissions on the customer endpoints (seeded in [P2](docs/app-ledger.md)), so the add/edit/delete controls there are absent for them — a real permission difference, not a client-side hint. HQ admin's access into the **系统** module is the opposite case on purpose: a full, genuinely-granted role (menu-driven `SysRoleMenu` rows, exactly like a real consumer would set up for an admin), with every button visible — demonstrating that this reference app is the kernel's full stock admin-system capability *plus* CRM layered on top, not a CRM-only tool. The login page's one-click account buttons cover all four.
 
 ### Demo mode (read-only, for a shared/public deployment)
 

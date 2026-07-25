@@ -33,5 +33,6 @@ export default {
     hq: 'HQ Admin · all',
     south: 'South China Manager · region',
     shenzhen: 'Shenzhen Specialist · branch only',
+    superAdmin: 'Super Admin · everything, bypasses scope',
   },
 }

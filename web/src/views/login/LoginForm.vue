@@ -123,16 +123,18 @@ function finishLogin(res: LoginOutput) {
 
 // CRM 演示头条:三个试用账号(种子数据固定,任何环境都存在)一键填入并登录,
 // 免得访客对着 README 手抄账号密码。有验证码时 onSubmit 会正常拦下、提示先输验证码。
-const TRIAL_PASSWORD = 'Trial@123456'
+// superAdmin 单列密码(与三个业务角色的共享密码不同,固定值来自部署时的 TenonAdmin:Seed:AdminPassword)——
+// 绕过范围限制看全部机构 + 系统管理模块,和"真实授权"的总部管理员形成对照。
 const trialAccounts = [
-  { account: '总部管理员', label: () => t('crm.trialLogin.hq') },
-  { account: '华南区域经理', label: () => t('crm.trialLogin.south') },
-  { account: '深圳专员', label: () => t('crm.trialLogin.shenzhen') },
+  { account: '总部管理员', password: 'Trial@123456', label: () => t('crm.trialLogin.hq') },
+  { account: '华南区域经理', password: 'Trial@123456', label: () => t('crm.trialLogin.south') },
+  { account: '深圳专员', password: 'Trial@123456', label: () => t('crm.trialLogin.shenzhen') },
+  { account: 'superAdmin', password: 'TenonExample@675b52d8', label: () => t('crm.trialLogin.superAdmin') },
 ]
-function quickLogin(account: string) {
+function quickLogin(account: string, password: string) {
   mode.value = 'account'
   model.account = account
-  model.password = TRIAL_PASSWORD
+  model.password = password
   onSubmit()
 }
 
@@ -349,7 +351,7 @@ async function onSmsSubmit() {
             type="button"
             class="lf-trial-btn"
             :disabled="loading"
-            @click="quickLogin(a.account)"
+            @click="quickLogin(a.account, a.password)"
           >
             {{ a.label() }}
           </button>

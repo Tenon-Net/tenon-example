@@ -33,5 +33,6 @@ export default {
     hq: '总部管理员 · 全部',
     south: '华南区域经理 · 该区域',
     shenzhen: '深圳专员 · 仅深圳分公司',
+    superAdmin: '超级管理员 · 全部(绕过范围)',
   },
 }

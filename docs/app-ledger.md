@@ -79,6 +79,22 @@ Status: complete on 2026-07-25. Deployed to production, replacing the kernel's o
 - To redeploy after a `git pull`: `cd /root/opt/tenon/tenon-example && git pull && docker compose -p tenon-example up -d --build`.
 - A found-and-fixed dogfood bug surfaced getting here: the template's `Dockerfile` broke for any hyphenated project name (`tenon-example` → `tenon_example` inside file content, but the actual `.csproj`/`.dll` kept the hyphen) — see [the strategic ledger](https://github.com/Tenon-Net/TenonAdmin/blob/dev/docs/crm-reference-app-ledger.md)'s dogfood section. Fixed in both repos; not yet cut into a TenonAdmin release.
 
+## Correction: Full Admin Console + CRM, Not CRM-Only
+
+Status: complete on 2026-07-25.
+
+After P4 shipped, the user reviewed the live deployment and rejected its shape: logging in with any trial account showed exactly one menu (CRM), with no way to reach the kernel's stock admin console. Their expectation — matching this ledger's own framing of CRM as "the first flagship module," not the only one — was that the demo should show the kernel's full out-of-the-box capability (org/user/role/menu/dict/config/log/file management) with CRM layered on top.
+
+Root cause (not a rendering bug): the kernel always seeds a built-in `system` `SysModule` (Id=1) with the full admin menu tree, but the three CRM trial roles were only ever granted `SysRoleMenu` rows for CRM's own 3 buttons. The frontend's module portal derives visible modules strictly from the calling user's menu grants, so with zero grants outside CRM, exactly one module was ever computed and the picker never appeared — a missing seed, not a bug in the portal itself.
+
+Fix (grilled and decided with the user):
+- [x] Only **HQ admin** (`总部管理员`) additionally gets full access to the kernel's `system` module — every menu, every button (add/edit/delete included), granted as a real `SysRoleMenu` role, not a `superAdmin` bypass. New seed `Modules/Crm/Seeds/CrmHqAdminSystemMenuSeed.cs` (105 menu grants, Ids 1100+, tied to the kernel's `DefaultMenuSeed.cs` at the version in use — won't auto-track future kernel menu additions). South China manager and Shenzhen specialist are unchanged, still CRM-only.
+- [x] Publish the existing `superAdmin` credentials as a fourth public account (its password was already fixed via `TenonAdmin:Seed:AdminPassword` at deploy time, not rotated — `SuperAdminSeed` only sets the password on the very first boot, so changing `.env` on an already-seeded server would do nothing without a destructive reseed). superAdmin bypasses org-scope entirely and sees all three modules (`system` + `crm` + the kernel's own sample `business` module).
+- [x] Deleted the never-wired `Modules/SampleDoc*` scaffold (four files: entity, service interface/impl, controller) and its `Program.cs` registration — a template leftover with no menu/permission seed of its own, sitting as an empty, unused table. CodeFirst doesn't drop the now-orphaned `sample_doc` table; left in place, harmless.
+- [x] Login page: added `superAdmin` as a fourth one-click quick-login entry (per-account password, since it differs from the shared `Trial@123456`).
+
+Verified via Playwright against a fresh local seed: HQ admin's `/module` picker now shows two tiles (`系统` + `客户管理`, CRM still the default); entering `系统` and navigating to `/system/user` renders the full user-management page with `新增`/`编辑`/`批量删除` etc. all visible and functional (DemoMode is off locally, so these are real, working buttons, not dead UI) — a real granted role, not fail-open. South manager and Shenzhen specialist re-verified unchanged (128/42, single CRM module). superAdmin's `/module` picker shows all three tiles. `dotnet build` and `npm run typecheck`/`lint` clean. Redeployed to production (`docker compose -p tenon-example up -d --build app web`) and re-verified against the live domain.
+
 ## Commit Policy
 
 Each completed task uses its own English conventional commit. This application keeps CRM business work local. A possible kernel or satellite-package improvement requires independently documented dogfood evidence; it is not authorized merely by this ledger.
