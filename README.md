@@ -1,3 +1,7 @@
+<!-- Keep in sync with README.zh-CN.md (canonical) -->
+
+English | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
+
 # Tenon Example
 
 `tenon-example` is the public reference consumer application for TenonAdmin. It is a single repository containing a growing, multi-module business system. CRM is its first flagship module; this repository does not develop reusable kernel or satellite-package capabilities.
