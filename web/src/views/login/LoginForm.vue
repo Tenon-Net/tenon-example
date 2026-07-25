@@ -121,6 +121,21 @@ function finishLogin(res: LoginOutput) {
   router.replace('/')
 }
 
+// CRM 演示头条:三个试用账号(种子数据固定,任何环境都存在)一键填入并登录,
+// 免得访客对着 README 手抄账号密码。有验证码时 onSubmit 会正常拦下、提示先输验证码。
+const TRIAL_PASSWORD = 'Trial@123456'
+const trialAccounts = [
+  { account: '总部管理员', label: () => t('crm.trialLogin.hq') },
+  { account: '华南区域经理', label: () => t('crm.trialLogin.south') },
+  { account: '深圳专员', label: () => t('crm.trialLogin.shenzhen') },
+]
+function quickLogin(account: string) {
+  mode.value = 'account'
+  model.account = account
+  model.password = TRIAL_PASSWORD
+  onSubmit()
+}
+
 async function onSubmit() {
   if (mode.value === 'mfa') return onMfaSubmit()
   if (mode.value === 'sms') return onSmsSubmit()
@@ -324,6 +339,23 @@ async function onSmsSubmit() {
         </button>
       </n-form>
 
+      <!-- CRM 演示三试用账号:一键填账号密码并登录,数据范围当场对比。 -->
+      <div v-if="mode === 'account'" class="lf-trial">
+        <span class="lf-trial-label">{{ t('crm.trialLogin.label') }}</span>
+        <div class="lf-trial-btns">
+          <button
+            v-for="a in trialAccounts"
+            :key="a.account"
+            type="button"
+            class="lf-trial-btn"
+            :disabled="loading"
+            @click="quickLogin(a.account)"
+          >
+            {{ a.label() }}
+          </button>
+        </div>
+      </div>
+
       <!-- 第三方登录:后端 providers 驱动;无启用项则整段不显。点击顶层跳转到 IdP(OAuth2 授权码往返)。 -->
       <template v-if="ssoProviders.length">
         <div class="lf-divider"><span>{{ t('login.otherMethods') }}</span></div>
@@ -477,6 +509,41 @@ async function onSmsSubmit() {
 }
 .hero-btn:disabled {
   opacity: 0.7;
+  cursor: not-allowed;
+}
+/* CRM 演示三试用账号:弱化标签 + 一行可换行的药丸按钮,不抢主登录表单的视觉重心 */
+.lf-trial {
+  margin: 4px 0 18px;
+}
+.lf-trial-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--lf-hint, var(--color-text-tertiary));
+}
+.lf-trial-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lf-trial-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--lf-border, var(--color-border));
+  border-radius: 999px;
+  background: var(--color-fill);
+  font-size: 12px;
+  color: var(--lf-title, var(--color-text-secondary));
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+.lf-trial-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.lf-trial-btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 /* 第三方登录:分隔线 + 等宽按钮(设计稿 §Variant A) */

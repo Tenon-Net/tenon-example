@@ -28,4 +28,10 @@ export default {
     withSelf: '{scope} + 本人',
     selfOnly: '仅本人',
   },
+  trialLogin: {
+    label: "一键体验(密码统一为 Trial{'@'}123456):",
+    hq: '总部管理员 · 全部',
+    south: '华南区域经理 · 该区域',
+    shenzhen: '深圳专员 · 仅深圳分公司',
+  },
 }

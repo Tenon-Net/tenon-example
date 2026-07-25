@@ -28,4 +28,10 @@ export default {
     withSelf: '{scope} + self',
     selfOnly: 'Self only',
   },
+  trialLogin: {
+    label: "One-click try it (password: Trial{'@'}123456):",
+    hq: 'HQ Admin · all',
+    south: 'South China Manager · region',
+    shenzhen: 'Shenzhen Specialist · branch only',
+  },
 }
