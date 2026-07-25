@@ -43,9 +43,17 @@ npm run dev
 
 The frontend development server proxies the backend API and OpenAPI contract to `http://localhost:5100`.
 
+## Docker
+
+```bash
+docker compose up -d --build
+```
+
+Builds and runs the full stack: MySQL, Redis, this backend, and a Caddy-fronted build of `web/`. Override secrets (`TENON_DB_PASSWORD`, `TENON_JWT_SECRET`, `TENON_ADMIN_PASSWORD`) and ports (`TENON_API_PORT`, `TENON_WEB_PORT`) via a `.env` file next to `docker-compose.yml` — never commit real values. The frontend container listens on `TENON_WEB_PORT` (default `8090`) and reverse-proxies `/api` and `/health*` to the backend itself.
+
 ## CRM Module: Multi-Org Data Scope In Action
 
-The same `GET /api/v1/biz/customer/page` request returns a different row count depending on who is logged in, and `CustomerService` contains zero manual organization filtering — the kernel's global query filter does it. Log in with any of the three seeded trial accounts (password `Trial@123456` for all three) and open **客户管理 / Customers**:
+The same `GET /api/v1/biz/customer/page` request returns a different row count depending on who is logged in, and `CustomerService` contains zero manual organization filtering — the kernel's global query filter does it. Try it live at **[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)**, or run it yourself: log in with any of the three seeded trial accounts (password `Trial@123456` for all three) and open **客户管理 / Customers**:
 
 | Account | Data scope | Rows visible |
 | --- | --- | --- |
@@ -61,9 +69,9 @@ All three accounts hold only read permissions on the customer endpoints (seeded 
 
 ### Demo mode (read-only, for a shared/public deployment)
 
-Set `TenonAdmin:DemoMode=true` (e.g. `TenonAdmin__DemoMode=true` as an environment variable, or in `appsettings.json`) to make every non-`GET` request — for every account, including `superAdmin` — return `403` with error code `41002`. This is a global server-side filter, not a UI convention: verified locally that reads (login, `page`, `scope`) keep working while writes are rejected for both a trial account and the super admin. Leave it unset (the default) for local development and evaluation, where the trial accounts' own read-only permissions are still enough to keep the shared demo narrative intact once deployed.
+Set `TenonAdmin:DemoMode=true` (e.g. `TenonAdmin__DemoMode=true` as an environment variable, or in `appsettings.json`) to make every non-`GET` request — for every account, including `superAdmin` — return `403` with error code `41002`. This is a global server-side filter, not a UI convention. Leave it unset (the default) for local development and evaluation, where the trial accounts' own read-only permissions are still enough to keep the shared demo narrative intact.
 
-Deploying this repository to replace an existing production domain, and turning `DemoMode` on there, requires separate maintainer authorization — see [the app ledger](docs/app-ledger.md)'s P4 section. What's documented above has been verified locally only.
+This is exactly how [tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login) runs: `docker-compose.yml` in this repo builds the full stack (MySQL + Redis + backend + Caddy-fronted frontend), and the live deployment layers a server-local `docker-compose.override.yml` on top to turn `DemoMode` on — see [the app ledger](docs/app-ledger.md)'s P4 section for the deployment record, backup, and rollback steps.
 
 ## Reproducible Creation
 
