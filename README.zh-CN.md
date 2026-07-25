@@ -1,28 +1,57 @@
-<!-- 本文件为准确来源(canonical);请与 README.md / README.ja.md 保持同步 -->
+<!-- 本文件为 README 的中文基准版；README.md、README.ja.md 以本文件为准同步 -->
 
 [English](README.md) | 简体中文 | [日本語](README.ja.md)
 
-# Tenon Example
+<h1 align="center">Tenon Example</h1>
 
-`tenon-example` 是 TenonAdmin 的公开参考消费者应用。它是一个单仓库、持续成长的多模块业务系统;CRM 是它的第一个旗舰模块,本仓库本身不开发可复用的内核或卫星包能力。
+<p align="center">
+  <em>TenonAdmin 的公开参考应用：一个装了包、部署上线、能直接点进去的真实后台。</em>
+</p>
 
-## 发布溯源
+<p align="center">
+  <a href="https://tenonadmin.52moyu.net/login"><strong>🔗 在线演示</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="https://github.com/Tenon-Net/TenonAdmin"><strong>📦 TenonAdmin 内核</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="docs/app-ledger.md"><strong>📋 执行台账</strong></a>
+</p>
 
-本仓库当前锁定在稳定版 `0.3.3`:
+---
 
-- NuGet:`TenonAdmin` `0.3.3` 与 `TenonAdmin.Templates` `0.3.3`。
-- 源码:TenonAdmin 标签 `v0.3.3`。
-- 后端:由 `dotnet new tenon-app` 生成;其 `Dockerfile` 已直接采用 `TenonAdmin.Templates@0.3.3` 携带的修复(先于模板发布本身落地——见[v0.3.3 升级记录](docs/v0.3.3-upgrade.md))。
-- 前端:提取自 `Tenon-Net/TenonAdmin/web#v0.3.2`,此后未变(`v0.3.3` 在 `web/` 目录下没有任何上游改动)。
+## 🎨 这是什么？
 
-`tenon-example.csproj` 中的 `TenonAdmin` PackageReference 必须与上述发布溯源严格保持一致。分阶段的工作与验证证据见[执行台账](docs/app-ledger.md)。
+一个装了 TenonAdmin 包的普通业务系统。它不是内核的一部分，代码里没有一行是「为了演示」才那么写的，你接入 TenonAdmin 之后写出来的东西就长这样。
 
-## 前置条件
+存在的理由是省掉「先读三天文档才知道值不值得试」这一步：线上有部署可以直接点，仓库可以直接克隆跑起来。CRM 是它的第一个业务模块，后面还会长出别的。这里不开发任何可复用的内核能力，那属于 [TenonAdmin](https://github.com/Tenon-Net/TenonAdmin) 仓库。
 
-- .NET SDK 10
-- Node.js 22 与 npm
+## 🔍 头条：同一个查询，三个数字
 
-## 后端
+用下面任意一个账号登录[在线演示](https://tenonadmin.52moyu.net/login)，打开**客户管理**：
+
+| 账号 | 密码 | 数据范围 | 看到几条 | 还能看到 |
+| --- | --- | --- | --- | --- |
+| `总部管理员` | `Trial@123456` | 全部机构 | 214 | CRM ＋ 整套系统管理菜单 |
+| `华南区域经理` | `Trial@123456` | 华南大区及其下属分部 | 128 | 只有 CRM |
+| `深圳专员` | `Trial@123456` | 仅深圳分部 | 42 | 只有 CRM |
+| `superAdmin` | `TenonExample@675b52d8` | 不受限 | 214 | 全部模块，全部按钮 |
+
+![总部管理员看到全部 214 行](docs/assets/hq-admin-214.png)
+![华南区域经理看到 128 行](docs/assets/south-manager-128.png)
+![深圳专员看到 42 行](docs/assets/shenzhen-specialist-42.png)
+
+三个数字来自同一个接口、同一段前端代码，而查询它的 `CustomerService` 里翻不出一行机构过滤。那行过滤是内核在业务代码之外挂上去的，[《同一个查询，三个数字》](docs/showcase-multi-org-data-scope.md)讲了它挂在哪、以及为什么这比「少写几行代码」值钱得多。
+
+前三个账号在客户接口上只有读权限，页面上根本不渲染增删改按钮。总部管理员额外拿到了内核自带的整套系统管理菜单，走的是正常角色授权而非超管绕过。登录页有一键登录按钮，四个账号都不用手打密码。
+
+## 🚀 跑起来
+
+需要 .NET 10 SDK；跑前端还需要 Node.js 22。
+
+### Docker
+
+```bash
+docker compose up -d --build
+```
+
+MySQL、Redis、后端、Caddy 托管的前端一起起来，前端监听 `TENON_WEB_PORT`（默认 `8090`），并把 `/api` 和 `/health*` 反代给后端。密钥和端口放在 `docker-compose.yml` 旁边的 `.env` 里覆盖（`TENON_DB_PASSWORD`、`TENON_JWT_SECRET`、`TENON_ADMIN_PASSWORD`、`TENON_API_PORT`、`TENON_WEB_PORT`），真实值不要提交。
+
+### 本地开发
 
 ```powershell
 dotnet restore
@@ -30,57 +59,34 @@ dotnet build -c Release
 dotnet run
 ```
 
-`Properties/launchSettings.json` 固定了 `ASPNETCORE_ENVIRONMENT=Development`;缺少它宿主会解析为 `Production`,此时按设计会禁用自动 CodeFirst 建表,启动将因缺少种子表而失败。请不要删除此文件。默认配置使用 SQLite。首次启动会创建数据库结构并在控制台打印一个随机的超级管理员密码,详见[v0.3.2 升级记录](docs/v0.3.2-upgrade.md)。后端运行后,存活探针、就绪探针与开发环境 OpenAPI 契约分别位于 `/health`、`/health/ready`、`/openapi/v1.json`。
+默认走 SQLite，不用先装数据库。首次启动自动建表、灌种子数据，并在控制台打印一串随机超管密码。起来之后 `/health`、`/health/ready`、`/openapi/v1.json` 都可以直接访问。
 
-## 前端
+`Properties/launchSettings.json` 别删。它固定了 `ASPNETCORE_ENVIRONMENT=Development`；缺了它宿主按 `Production` 解析，CodeFirst 自动建表会按设计关掉，启动时直接因为找不到种子表而失败。这个坑的来龙去脉在 [v0.3.2 升级记录](docs/v0.3.2-upgrade.md)。
 
-请先启动后端。不要在同一台机器上同时运行后端和前端的校验进程。
+前端另开一个终端，别和后端的校验进程抢内存：
 
 ```powershell
 Set-Location web
 npm install
 npm run gen:api
-npm run typecheck
-npm run lint
 npm run dev
 ```
 
-前端开发服务器会将 API 与 OpenAPI 契约代理到 `http://localhost:5100`。
+dev server 会把 API 和 OpenAPI 契约代理到 `http://localhost:5100`。`npm run typecheck` 和 `npm run lint` 是提交前该跑的两条。
 
-## Docker
+## 🔒 演示模式
 
-```bash
-docker compose up -d --build
-```
+`TenonAdmin:DemoMode=true`（环境变量写作 `TenonAdmin__DemoMode=true`）一开，所有账号（含 `superAdmin`）的非 `GET` 请求一律返回 `403`，错误码 `41002`。这是服务端的全局过滤器，不是前端藏几个按钮。
 
-会构建并运行完整技术栈:MySQL、Redis、本后端,以及由 Caddy 托管的 `web/` 生产构建产物。通过与 `docker-compose.yml` 同目录的 `.env` 文件覆盖密钥(`TENON_DB_PASSWORD`、`TENON_JWT_SECRET`、`TENON_ADMIN_PASSWORD`)与端口(`TENON_API_PORT`、`TENON_WEB_PORT`)——切勿提交真实值。前端容器监听 `TENON_WEB_PORT`(默认 `8090`),并将 `/api` 与 `/health*` 反向代理到后端本身。
+[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login) 就这么跑的：本仓库的 `docker-compose.yml` 起完整技术栈，服务器上再叠一份 `docker-compose.override.yml` 把开关打开。部署、备份、回滚记录在[执行台账](docs/app-ledger.md)的 P4。本地开发不用管它，默认是关的。
 
-## CRM 模块:多组织数据权限实战
+## 📌 版本对齐
 
-同一个 `GET /api/v1/biz/customer/page` 请求,根据登录者不同会返回不同的行数,而 `CustomerService` 里没有任何手写的组织过滤逻辑——都是内核的全局查询过滤器在起作用。可以直接在 **[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)** 上体验,也可以自己跑起来:用下面任意一个体验账号登录,打开 **客户管理 / Customers**。这套机制的完整拆解见[《同一个页面,不同的行数》](docs/showcase-multi-org-data-scope.md)。
+当前锁定在稳定版 `0.3.3`：NuGet 上的 `TenonAdmin` 与 `TenonAdmin.Templates` 都是 `0.3.3`，对应源码 tag `v0.3.3`。后端由 `dotnet new tenon-app` 生成，其中 `Dockerfile` 提前采用了 `0.3.3` 才发布的修复（见 [v0.3.3 升级记录](docs/v0.3.3-upgrade.md)）；前端提取自 `Tenon-Net/TenonAdmin/web#v0.3.2`，此后上游 `web/` 没有任何改动。
 
-| 账号 | 密码 | 数据范围 | 可见行数 | 还能看到 |
-| --- | --- | --- | --- | --- |
-| `总部管理员`(HQ admin) | `Trial@123456` | 全部组织 | 214 | 完整的**系统 (system)** 管理控制台——组织/用户/角色/菜单/字典/配置/日志/文件管理,一个真正被授权的角色(不是靠 `superAdmin` 绕过) |
-| `华南区域经理`(South China regional manager) | `Trial@123456` | 华南大区及其下属机构 | 128 | 仅 CRM |
-| `深圳专员`(Shenzhen specialist) | `Trial@123456` | 仅深圳分部 | 42 | 仅 CRM |
-| `superAdmin` | `TenonExample@675b52d8` | 不受限(绕过数据范围) | 214 | 全部模块(系统 + crm + 内核自带的示例业务模块),所有页面完整增删改查 |
+`tenon-example.csproj` 里的版本号必须和上面这段严格一致。内核每发一个版本，这里跟着 bump 一次并重验一遍——这个仓库同时也是内核的永久集成金丝雀，版本落后就等于金丝雀没在笼子里。
 
-![总部管理员可见全部 214 行](docs/assets/hq-admin-214.png)
-![华南区域经理可见 128 行,范围限定在本大区及其下属机构](docs/assets/south-manager-128.png)
-![深圳专员只能看到自己的 42 行](docs/assets/shenzhen-specialist-42.png)
-
-三个业务角色账号在客户相关接口上只被授予了只读权限(种子数据见 [P2](docs/app-ledger.md)),所以新增/编辑/删除按钮对它们而言根本不存在——这是真实的权限差异,不是前端做的样子。总部管理员进入 **系统** 模块则刻意相反:一个真正被授权的完整角色(和真实消费者给管理员配置的一样,基于菜单驱动的 `SysRoleMenu` 记录),所有按钮都可见。这是为了说明这个参考应用展示的是内核完整的开箱即用后台能力**加上** CRM,而不是一个只有 CRM 的工具。登录页的一键登录按钮覆盖全部四个账号。
-
-### 演示模式(只读,适用于共享/公开部署)
-
-设置 `TenonAdmin:DemoMode=true`(例如环境变量 `TenonAdmin__DemoMode=true`,或写在 `appsettings.json` 里)后,所有账号(包括 `superAdmin`)发起的任何非 `GET` 请求都会返回 `403`,错误码 `41002`。这是服务端的全局过滤器,不是前端约定。本地开发与评估时留空(默认值)即可,体验账号自身的只读权限已经足够维持共享演示的叙事完整性。
-
-[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login) 就是这样运行的:本仓库的 `docker-compose.yml` 构建完整技术栈(MySQL + Redis + 后端 + Caddy 托管前端),线上部署再叠加一份服务器本地的 `docker-compose.override.yml` 打开 `DemoMode`——部署记录、备份与回滚步骤见[执行台账](docs/app-ledger.md)的 P4 部分。
-
-## 可复现的创建过程
-
-从一个空的父目录开始,使用与上文记录一致的产物:
+从空目录复现同一套产物：
 
 ```powershell
 dotnet new install TenonAdmin.Templates@0.3.3
@@ -89,4 +95,4 @@ Set-Location tenon-example
 npx degit Tenon-Net/TenonAdmin/web#v0.3.3 web
 ```
 
-然后按本文件的后端与前端命令继续。P0 验证记录与消费者发现维护在 `docs/` 目录下。
+然后照上面「跑起来」两节走。分阶段的实现记录、验证证据和踩坑清单都在 `docs/`。

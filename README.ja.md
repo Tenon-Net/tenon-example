@@ -1,28 +1,57 @@
-<!-- README.zh-CN.md (canonical) と同期を保つこと -->
+<!-- README.zh-CN.md（中国語が基準版）と同期を保つこと -->
 
 [English](README.md) | [简体中文](README.zh-CN.md) | 日本語
 
-# Tenon Example
+<h1 align="center">Tenon Example</h1>
 
-`tenon-example` は TenonAdmin の公開リファレンス消費者アプリケーションです。単一リポジトリで構成される、成長し続けるマルチモジュール業務システムであり、CRM がその最初のフラッグシップモジュールです。本リポジトリ自体は再利用可能なカーネルやサテライトパッケージの機能を開発しません。
+<p align="center">
+  <em>TenonAdmin の公開リファレンスアプリ：パッケージを入れ、本番に載せ、今すぐ触れる本物のバックオフィス。</em>
+</p>
 
-## リリースの来歴
+<p align="center">
+  <a href="https://tenonadmin.52moyu.net/login"><strong>🔗 オンラインデモ</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="https://github.com/Tenon-Net/TenonAdmin"><strong>📦 TenonAdmin 本体</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;<a href="docs/app-ledger.md"><strong>📋 実行台帳</strong></a>
+</p>
 
-本リポジトリは現在、安定版 `0.3.3` に固定されています:
+---
 
-- NuGet: `TenonAdmin` `0.3.3` および `TenonAdmin.Templates` `0.3.3`。
-- ソース: TenonAdmin タグ `v0.3.3`。
-- バックエンド: `dotnet new tenon-app` で生成。`Dockerfile` は `TenonAdmin.Templates@0.3.3` が同梱する修正を、テンプレートのリリース自体より先に直接取り込み済み([v0.3.3 アップグレード記録](docs/v0.3.3-upgrade.md)参照)。
-- フロントエンド: `Tenon-Net/TenonAdmin/web#v0.3.2` から抽出し、以降変更なし(`v0.3.3` は `web/` 配下に上流の変更なし)。
+## 🎨 これは何？
 
-`tenon-example.csproj` の `TenonAdmin` PackageReference は、上記のリリース来歴と厳密に一致していなければなりません。段階的な作業内容と検証エビデンスは[アプリ台帳](docs/app-ledger.md)を参照してください。
+TenonAdmin を入れただけの、ごく普通の業務システムです。カーネルの一部ではありませんし、「デモのために」書かれた行は一つもありません——TenonAdmin を採用したあなたのコードも、こう見えるはずです。
 
-## 前提条件
+存在理由は「試す価値があるか判断するために、まず 3 日ドキュメントを読む」という手順を省くこと。触れるデプロイがあり、クローンして動かせるリポジトリがあります。CRM は最初の業務モジュールで、この先さらに増えていきます。再利用可能なカーネル機能はここでは一切開発しません。それは [TenonAdmin](https://github.com/Tenon-Net/TenonAdmin) リポジトリの担当です。
 
-- .NET SDK 10
-- Node.js 22 および npm
+## 🔍 目玉：同じクエリ、3 つの数字
 
-## バックエンド
+[オンラインデモ](https://tenonadmin.52moyu.net/login)に以下のいずれかのアカウントでログインし、**客户管理（顧客管理）**を開いてください：
+
+| アカウント | パスワード | データスコープ | 件数 | ほかに見えるもの |
+| --- | --- | --- | --- | --- |
+| `总部管理员`（本社管理者） | `Trial@123456` | 全組織 | 214 | CRM ＋ システム管理一式 |
+| `华南区域经理`（華南地区マネージャー） | `Trial@123456` | 華南地区とその配下 | 128 | CRM のみ |
+| `深圳专员`（深圳担当） | `Trial@123456` | 深圳支店のみ | 42 | CRM のみ |
+| `superAdmin` | `TenonExample@675b52d8` | 無制限 | 214 | 全モジュール、全ボタン |
+
+![本社管理者には 214 件すべてが見える](docs/assets/hq-admin-214.png)
+![華南地区マネージャーには 128 件](docs/assets/south-manager-128.png)
+![深圳担当には 42 件](docs/assets/shenzhen-specialist-42.png)
+
+3 つの数字は同じエンドポイント、同じフロントエンドコードから出ています。しかも、それを叩く `CustomerService` には組織フィルターが 1 行もありません。カーネルがビジネスコードの外側でフィルターを掛けているからです。どこで掛かっているのか、そしてなぜそれが「数行短く書ける」よりはるかに価値があるのかは、[同じクエリ、3 つの数字](docs/showcase-multi-org-data-scope.md)（中国語）にまとめてあります。
+
+上 3 つのアカウントは顧客エンドポイントに読み取り権限しか持たないため、追加・編集・削除ボタンはそもそもレンダリングされません。本社管理者はさらにカーネル標準のシステム管理メニュー一式を持っていますが、これはスーパー管理者のバイパスではなく通常のロール付与によるものです。ログインページにはこの 4 つのワンクリックボタンがあるので、パスワードを打つ必要はありません。
+
+## 🚀 動かす
+
+.NET 10 SDK が必要です。フロントエンドも動かすなら Node.js 22 も。
+
+### Docker
+
+```bash
+docker compose up -d --build
+```
+
+MySQL、Redis、バックエンド、Caddy 配信のフロントエンドが一度に立ち上がります。フロントエンドは `TENON_WEB_PORT`（デフォルト `8090`）で待ち受け、`/api` と `/health*` をバックエンドへリバースプロキシします。シークレットとポートは `docker-compose.yml` の隣に置く `.env` で上書きしてください（`TENON_DB_PASSWORD`、`TENON_JWT_SECRET`、`TENON_ADMIN_PASSWORD`、`TENON_API_PORT`、`TENON_WEB_PORT`）。実際の値は絶対にコミットしないこと。
+
+### ローカル開発
 
 ```powershell
 dotnet restore
@@ -30,57 +59,34 @@ dotnet build -c Release
 dotnet run
 ```
 
-`Properties/launchSettings.json` は `ASPNETCORE_ENVIRONMENT=Development` を固定しています。これがないとホストは `Production` として解決され、設計上 CodeFirst による自動スキーマ作成が無効化され、シードテーブル不足で起動に失敗します。このファイルは削除しないでください。デフォルト設定は SQLite を使用します。初回起動時にスキーマを作成し、ランダムなスーパー管理者パスワードをコンソールに出力します(詳細は[v0.3.2 アップグレード記録](docs/v0.3.2-upgrade.md))。バックエンド起動後、ライブネス・レディネス・開発用 OpenAPI コントラクトはそれぞれ `/health`、`/health/ready`、`/openapi/v1.json` で利用できます。
+デフォルトは SQLite なので、先に DB を用意する必要はありません。初回起動でスキーマを作成し、シードデータを投入し、ランダムな管理者パスワードをコンソールに出力します。起動後は `/health`、`/health/ready`、`/openapi/v1.json` にそのままアクセスできます。
 
-## フロントエンド
+`Properties/launchSettings.json` は削除しないでください。これが `ASPNETCORE_ENVIRONMENT=Development` を固定しています。無いとホストは `Production` として解決され、CodeFirst の自動スキーマ作成が設計上オフになり、シードテーブルが無いまま起動に失敗します。経緯は [v0.3.2 アップグレード記録](docs/v0.3.2-upgrade.md)に。
 
-先にバックエンドを起動してください。このマシン上でバックエンドとフロントエンドの検証プロセスを同時に実行しないでください。
+フロントエンドは別のターミナルで。バックエンドの検証プロセスとメモリを取り合わせないように：
 
 ```powershell
 Set-Location web
 npm install
 npm run gen:api
-npm run typecheck
-npm run lint
 npm run dev
 ```
 
-フロントエンドの開発サーバーは API と OpenAPI コントラクトを `http://localhost:5100` にプロキシします。
+dev サーバーが API と OpenAPI コントラクトを `http://localhost:5100` へプロキシします。コミット前に走らせるのは `npm run typecheck` と `npm run lint` の 2 本。
 
-## Docker
+## 🔒 デモモード
 
-```bash
-docker compose up -d --build
-```
+`TenonAdmin:DemoMode=true`（環境変数なら `TenonAdmin__DemoMode=true`）を有効にすると、`superAdmin` を含むすべてのアカウントの `GET` 以外のリクエストが、エラーコード `41002` とともに `403` を返します。UI でボタンを隠しているのではなく、サーバー側のグローバルフィルターです。
 
-MySQL、Redis、本バックエンド、そして Caddy でホストされた `web/` の本番ビルドという、フルスタックをビルド・実行します。シークレット(`TENON_DB_PASSWORD`、`TENON_JWT_SECRET`、`TENON_ADMIN_PASSWORD`)とポート(`TENON_API_PORT`、`TENON_WEB_PORT`)は `docker-compose.yml` と同じ場所に置いた `.env` ファイルで上書きしてください——実際の値はコミットしないこと。フロントエンドコンテナは `TENON_WEB_PORT`(デフォルト `8090`)で待ち受け、`/api` と `/health*` をバックエンド自身にリバースプロキシします。
+[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login) はまさにこの構成です。本リポジトリの `docker-compose.yml` がフルスタックを立ち上げ、サーバー側で `docker-compose.override.yml` を重ねてスイッチを入れています。デプロイ・バックアップ・ロールバックの記録は[実行台帳](docs/app-ledger.md)の P4 に。ローカルでは触る必要はありません。デフォルトはオフです。
 
-## CRM モジュール:マルチ組織データスコープの実演
+## 📌 バージョン整合
 
-同じ `GET /api/v1/biz/customer/page` リクエストでも、ログインしたユーザーによって返される行数が変わります。しかも `CustomerService` には組織フィルタリングのコードは一切書かれていません——すべてカーネルのグローバルクエリフィルターが行っています。**[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)** で実際に試すか、自分で実行して以下のいずれかの体験用アカウントでログインし、**客户管理 / Customers** を開いてください。仕組みの詳細な解説(中国語)は[ショーケース記事](docs/showcase-multi-org-data-scope.md)を参照してください。
+現在は安定版 `0.3.3` に固定しています。NuGet の `TenonAdmin` と `TenonAdmin.Templates` がともに `0.3.3`、ソースは tag `v0.3.3`。バックエンドは `dotnet new tenon-app` で生成し、`Dockerfile` は `0.3.3` で出た修正を先行して取り込んでいます（[v0.3.3 アップグレード記録](docs/v0.3.3-upgrade.md)参照）。フロントエンドは `Tenon-Net/TenonAdmin/web#v0.3.2` から抽出したもので、その後上流の `web/` に変更はありません。
 
-| アカウント | パスワード | データスコープ | 表示行数 | その他 |
-| --- | --- | --- | --- | --- |
-| `总部管理员`(本社管理者) | `Trial@123456` | 全組織 | 214 | 完全な**系统(system)**管理コンソール——組織/ユーザー/ロール/メニュー/辞書/設定/ログ/ファイル管理。(`superAdmin` のバイパスではなく)実際に権限付与された本物のロール |
-| `华南区域经理`(華南地区マネージャー) | `Trial@123456` | 華南地区とその配下 | 128 | CRM のみ |
-| `深圳专员`(深圳担当) | `Trial@123456` | 深圳支店のみ | 42 | CRM のみ |
-| `superAdmin` | `TenonExample@675b52d8` | 無制限(スコープをバイパス) | 214 | 全モジュール(system + crm + カーネル同梱のサンプル業務モジュール)、あらゆる画面でフル CRUD |
+`tenon-example.csproj` のバージョンは、この段落と厳密に一致していなければなりません。カーネルがリリースされるたびにここも上げて検証し直します——このリポジトリはカーネルの常設インテグレーションカナリアも兼ねており、バージョンが古いカナリアは籠に入っていないのと同じだからです。
 
-![本社管理者は全214行を閲覧できる](docs/assets/hq-admin-214.png)
-![華南地区マネージャーは128行、地区とその配下にスコープされている](docs/assets/south-manager-128.png)
-![深圳担当は自分の42行のみ閲覧できる](docs/assets/shenzhen-specialist-42.png)
-
-3つの業務ロールアカウントは顧客関連エンドポイントに対して読み取り権限のみを付与されている(シードデータは [P2](docs/app-ledger.md) 参照)ため、追加/編集/削除ボタンはそもそも存在しません——これはクライアント側の見せかけではなく、実際の権限差です。本社管理者が **系统** モジュールへアクセスできるのは意図的にその逆のケースで、実際の消費者が管理者向けに設定するのと同様に、メニュー駆動の `SysRoleMenu` 行によって完全に権限付与された本物のロールであり、すべてのボタンが表示されます。これは、本リファレンスアプリがカーネルの完全な標準管理システム機能に CRM を上乗せしたものであり、CRM 専用ツールではないことを示すためのものです。ログインページのワンクリックアカウントボタンは、この4つすべてをカバーしています。
-
-### デモモード(共有・公開デプロイ向けの読み取り専用モード)
-
-`TenonAdmin:DemoMode=true`(環境変数 `TenonAdmin__DemoMode=true`、または `appsettings.json` に設定)を有効にすると、`superAdmin` を含むすべてのアカウントによる `GET` 以外のリクエストが、エラーコード `41002` とともに `403` を返すようになります。これはサーバー側のグローバルフィルターであり、UI 上の取り決めではありません。ローカル開発や評価時は未設定(デフォルト)のままで構いません——体験用アカウント自体の読み取り専用権限だけで、共有デモとしての一貫性は十分に保たれます。
-
-[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login) は実際にこの構成で稼働しています:本リポジトリの `docker-compose.yml` がフルスタック(MySQL + Redis + バックエンド + Caddy ホストのフロントエンド)をビルドし、本番デプロイではさらにサーバーローカルの `docker-compose.override.yml` を重ねて `DemoMode` を有効化しています——デプロイ記録、バックアップ、ロールバック手順は[アプリ台帳](docs/app-ledger.md)の P4 セクションを参照してください。
-
-## 再現可能な作成手順
-
-空の親ディレクトリから、上記に記録された成果物を使って:
+空のディレクトリから同じ成果物を再現する手順：
 
 ```powershell
 dotnet new install TenonAdmin.Templates@0.3.3
@@ -89,4 +95,4 @@ Set-Location tenon-example
 npx degit Tenon-Net/TenonAdmin/web#v0.3.3 web
 ```
 
-その後、本ファイルのバックエンド・フロントエンドの手順に従ってください。P0 検証記録と消費者としての発見事項は `docs/` 配下で管理されています。
+あとは上の 2 節に従ってください。段階ごとの実装記録、検証エビデンス、消費者としてハマった点の一覧はすべて `docs/` にあります。
