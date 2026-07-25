@@ -4,12 +4,12 @@
 
 ## Release Provenance
 
-This repository is pinned to the stable `0.3.2` release:
+This repository is pinned to the stable `0.3.3` release:
 
-- NuGet: `TenonAdmin` `0.3.2` and `TenonAdmin.Templates` `0.3.2`.
-- Source: TenonAdmin tag `v0.3.2`.
-- Backend: generated with `dotnet new tenon-app` from `TenonAdmin.Templates@0.3.2`.
-- Frontend: extracted from `Tenon-Net/TenonAdmin/web#v0.3.2`.
+- NuGet: `TenonAdmin` `0.3.3` and `TenonAdmin.Templates` `0.3.3`.
+- Source: TenonAdmin tag `v0.3.3`.
+- Backend: generated with `dotnet new tenon-app`; its `Dockerfile` matches the fix `TenonAdmin.Templates@0.3.3` ships (adopted directly, ahead of the template release — see [the v0.3.3 upgrade record](docs/v0.3.3-upgrade.md)).
+- Frontend: extracted from `Tenon-Net/TenonAdmin/web#v0.3.2`, unchanged since (`v0.3.3` made no changes under `web/` upstream).
 
 The `TenonAdmin` PackageReference in `tenon-example.csproj` must remain exactly aligned with the release provenance above. See [the app ledger](docs/app-ledger.md) for staged work and evidence.
 
@@ -79,10 +79,10 @@ This is exactly how [tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login)
 From an empty parent directory, use the same artifacts recorded above:
 
 ```powershell
-dotnet new install TenonAdmin.Templates@0.3.2
+dotnet new install TenonAdmin.Templates@0.3.3
 dotnet new tenon-app --output tenon-example
 Set-Location tenon-example
-npx degit Tenon-Net/TenonAdmin/web#v0.3.2 web
+npx degit Tenon-Net/TenonAdmin/web#v0.3.3 web
 ```
 
 Then follow the backend and frontend commands in this README. The P0 validation record and consumer findings are maintained under `docs/`.

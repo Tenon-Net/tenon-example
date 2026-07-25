@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <!-- 元包:一引全栈(Core + SqlSugar + Services + AspNetCore)。 -->
-    <PackageReference Include="TenonAdmin" Version="0.3.2" />
+    <PackageReference Include="TenonAdmin" Version="0.3.3" />
   </ItemGroup>
 
   <!-- tests/ 是独立测试工程(自己的 .csproj),不并入本项目的隐式 Compile 通配。 -->
