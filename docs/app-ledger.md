@@ -2,10 +2,12 @@
 
 ## Provenance
 
-- Stable package release: `0.3.0`
-- TenonAdmin source: tag `v0.3.0`, commit `ac84cad325bb808e67321b7b1b4c8b37d6fa94bd`
-- Backend template: `TenonAdmin.Templates::0.3.0`
-- Frontend source: `Tenon-Net/TenonAdmin/web#v0.3.0`
+- Stable package release: `0.3.1`
+- TenonAdmin source: tag `v0.3.1`, commit `bc7a1eecbf64a7e2adcd0ee10225e0c6c6cafae1`
+- Backend template: `TenonAdmin.Templates@0.3.1`
+- Frontend source: `Tenon-Net/TenonAdmin/web#v0.3.1`
+
+P0 was first validated against `0.3.0`; the upgrade to `0.3.1` and the full gate re-run are recorded in [v0.3.1 revalidation](v0.3.1-revalidation.md).
 
 This ledger owns the detailed implementation work for P1-P4. The strategic ledger and kernel/template dogfood intake remain in `TenonAdmin`.
 
@@ -20,6 +22,7 @@ Status: complete on 2026-07-24. See [P0 validation](p0-validation.md).
 - [x] Install frontend dependencies, generate the API contract, type-check, lint, and complete a real browser login.
 - [x] Reproduce the critical README path from an empty directory.
 - [x] Record consumer findings. Only reusable kernel/template findings are eligible for a TenonAdmin dogfood issue.
+- [x] Upgrade to `0.3.1` and re-run every gate after the upstream fixes shipped, including `npm ci`, `npm audit`, tests, and the production build.
 
 ## P1: CRM Backend
 
