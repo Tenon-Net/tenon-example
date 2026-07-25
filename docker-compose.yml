@@ -1,0 +1,96 @@
+# 一键 `docker compose up`:数据库(MySQL)+ Redis + 后端(本仓库的 host)+ 前端(Caddy 反代 /api)。
+# 参照 TenonAdmin 内核仓库自己的 docker-compose.yml,按这个 consumer host 的实际项目名调整。
+#
+# 这同时也是**部署到真实域名的实操**:应用可以使用 ASPNETCORE_ENVIRONMENT=Production 启动,
+# 但生产环境这样启动时,缺任一以下配置都会报可读的错误退出(要提前验证的):
+#   · Jwt:SecretKey 必须显式配置(不能用镜像自动生成的开发密钥,否则每次重启都用新密钥签发 → 全员 401)
+#   · 生产数据库首次建表时必须显式开启(TenonAdmin:Database:EnableCodeFirstInProduction,默认不自动 ALTER 数据库)
+#   · 上传物目录不能留在 wwwroot 里(否则 UseStaticFiles() 会导致上传目录变成公开可读)
+#
+# 演示用的密钥/密码写在这里的都是默认值,只是**样例**——正式部署时务必通过环境变量注入。
+# (compose 会从同目录的 .env 文件读取。)
+name: tenon-example
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${TENON_DB_PASSWORD:-tenon-compose-demo}
+      MYSQL_DATABASE: tenon_example
+    healthcheck:
+      # 应用容器只能等数据库真的就绪(depends_on: service_healthy),避免首次启动时
+      # 出现"数据库未就绪"的错误。
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${TENON_DB_PASSWORD:-tenon-compose-demo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - db-data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - redis-data:/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      TenonAdmin__Jwt__SecretKey: ${TENON_JWT_SECRET:-tenon-example-compose-demo-signing-key-please-change-me}
+      TenonAdmin__Database__DbType: MySql
+      TenonAdmin__Database__ConnectionString: Server=db;Port=3306;Database=tenon_example;User ID=root;Password=${TENON_DB_PASSWORD:-tenon-compose-demo};AllowPublicKeyRetrieval=true;SSL Mode=None;
+      # 首次建表需要显式打开;数据库交给 DBA 维护时,上线前手动建好表后可以关掉。
+      TenonAdmin__Database__EnableCodeFirstInProduction: "true"
+      # 上传目录放到 wwwroot 之外,见文件头注释。
+      TenonAdmin__Upload__RootPath: /data/upload
+      # 首启超级管理员密码。未指定时随机生成、只打印到容器启动日志(docker compose logs app)。
+      TenonAdmin__Seed__AdminPassword: ${TENON_ADMIN_PASSWORD:-Tenon@123456}
+
+      # 接 Redis:多副本场景不是可选优化,而是**前提条件**——不接的话,副本 A 上的强制登出/
+      # 权限撤销不会传达到副本 B(会话状态和限流的 TTL 会刷新到孤立内存)。单副本也建议接上,
+      # 重启进程时会话状态不会跟着丢。
+      TenonAdmin__Cache__Provider: Redis
+      TenonAdmin__Cache__RedisConnectionString: redis:6379
+
+      # 雪花算法 WorkerId:水平扩展时每个实例必须不同(0-63),否则同一毫秒生成的 ID 可能冲突。
+      # 若通过 Redis 未显式配置此值,内核拒绝启动(默认让它冲突,行为比崩溃更危险)。
+      TenonAdmin__Id__WorkerId: "0"
+
+      # 转发头:Caddy(web 容器)位于前端,不接这个后端只能看到 X-Forwarded-For,后端拿不到
+      # 请求方的真实 IP(登录限流/审计日志都会记成同一个内网 IP:Docker 桥接网络)。
+      TenonAdmin__Api__ForwardedHeaders__Enabled: "true"
+      TenonAdmin__Api__ForwardedHeaders__KnownNetworks__0: 172.16.0.0/12
+    ports:
+      # 只绑本机地址:不经过前端(Caddy)直接暴露此端口的人,能伪造 X-Forwarded-For 使自己的
+      # 请求看起来来自任意 IP,从而绕过登录限流。仅用于调试。
+      - "127.0.0.1:${TENON_API_PORT:-8091}:8080"
+    volumes:
+      - app-data:/app/data       # SQLite(默认未使用)+ JWT 开发签名密钥
+      - upload-data:/data/upload # 上传文件
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    depends_on:
+      - app
+    ports:
+      - "${TENON_WEB_PORT:-8090}:80"
+
+volumes:
+  db-data:
+  redis-data:
+  app-data:
+  upload-data:
