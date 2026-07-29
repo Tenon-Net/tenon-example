@@ -35,4 +35,8 @@ export default {
     shenzhen: '深圳专员 · 仅深圳分公司',
     superAdmin: '超级管理员 · 全部(绕过范围)',
   },
+  importDryRunBanner:
+    '演示环境：可完整走导入向导（上传 / 预览 / 校验 / 提交），提交不会写入数据库，避免产生脏数据。导出与列表同源，仍受数据权限过滤。',
+  importDryRunHint:
+    '演示模式：校验通过，新增 {inserted}、更新 {updated}、跳过 {skipped}——均未写入数据库。',
 }

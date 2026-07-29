@@ -11,6 +11,12 @@ public interface ICustomerService
     /// <summary>分页查询客户,按名称模糊过滤,按 Id 降序返回(新建的在前)。</summary>
     Task<PagedList<Customer>> PageAsync(CustomerPageInput input);
 
+    /// <summary>
+    /// 导出取数——与 <see cref="PageAsync"/> 同源过滤,但不走分页截断
+    /// (PageAsync 的 MAX_SIZE=200 会静默少导,见 wire-import-export 坑 1)。
+    /// </summary>
+    Task<IReadOnlyList<Customer>> ExportAsync(CustomerPageInput input);
+
     /// <summary>按 Id 取单条,不在当前数据范围内或不存在均抛 <see cref="BizErrorCode.CustomerNotFound"/>。</summary>
     Task<Customer> GetAsync(long id);
 

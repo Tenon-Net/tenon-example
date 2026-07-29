@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -8,7 +8,9 @@
 
   <ItemGroup>
     <!-- 元包:一引全栈(Core + SqlSugar + Services + AspNetCore)。 -->
-    <PackageReference Include="TenonAdmin" Version="0.3.3" />
+    <PackageReference Include="TenonAdmin" Version="0.5.0" />
+    <!-- 可选卫星:xlsx 导入导出 codec;不装则 46001。 -->
+    <PackageReference Include="TenonAdmin.Excel" Version="0.5.0" />
   </ItemGroup>
 
   <!-- tests/ 是独立测试工程(自己的 .csproj),不并入本项目的隐式 Compile 通配。 -->

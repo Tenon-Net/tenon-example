@@ -4,8 +4,10 @@ using TenonAdmin.SqlSugar;
 namespace tenon_example.Modules.Crm.Seeds;
 
 /// <summary>
-/// 把客户管理的三个只读权限授予全部三个 CRM 试用角色——三个账号的差异纯粹是数据范围,
+/// 把客户管理的只读 + 导入导出权限授予全部三个 CRM 试用角色——三个账号的差异纯粹是数据范围,
 /// 不是功能权限(§2 头条:同一菜单、同一按钮,行不同)。
+/// <para>Id 用固定公式 <c>2000 + roleIndex * 20 + menuIndex</c>,避免升级时与旧 1000–1008 主键撞车
+/// (连接表按 RoleId+MenuId 判存,但 INSERT 仍要带唯一主键)。</para>
 /// </summary>
 public sealed class CrmRoleMenuSeed : ISeedData<SysRoleMenu>
 {
@@ -24,13 +26,26 @@ public sealed class CrmRoleMenuSeed : ISeedData<SysRoleMenu>
         CrmMenuSeed.CustomerPageButtonId,
         CrmMenuSeed.CustomerDetailButtonId,
         CrmMenuSeed.CustomerScopeButtonId,
+        CrmMenuSeed.CustomerImportPreviewButtonId,
+        CrmMenuSeed.CustomerImportValidateButtonId,
+        CrmMenuSeed.CustomerImportErrorReportButtonId,
+        CrmMenuSeed.CustomerImportCommitButtonId,
+        CrmMenuSeed.CustomerExportButtonId,
     ];
 
     public IEnumerable<SysRoleMenu> HasData()
     {
-        long id = 1000;
-        foreach (var roleId in RoleIds)
-            foreach (var menuId in MenuIds)
-                yield return new SysRoleMenu { Id = id++, RoleId = roleId, MenuId = menuId };
+        for (var ri = 0; ri < RoleIds.Length; ri++)
+        {
+            for (var mi = 0; mi < MenuIds.Length; mi++)
+            {
+                yield return new SysRoleMenu
+                {
+                    Id = 2000 + ri * 20 + mi,
+                    RoleId = RoleIds[ri],
+                    MenuId = MenuIds[mi],
+                };
+            }
+        }
     }
 }

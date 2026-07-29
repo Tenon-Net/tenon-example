@@ -1,4 +1,4 @@
-<!-- Keep in sync with README.zh-CN.md (canonical) -->
+﻿<!-- Keep in sync with README.zh-CN.md (canonical) -->
 
 English | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
@@ -74,25 +74,25 @@ npm run dev
 
 The dev server proxies the API and the OpenAPI contract to `http://localhost:5100`. `npm run typecheck` and `npm run lint` are the two to run before committing.
 
-## 🔒 Demo mode
+## 🔒 Demo mode and import experience
 
-Turn on `TenonAdmin:DemoMode=true` (as an environment variable, `TenonAdmin__DemoMode=true`) and every non-`GET` request from every account — `superAdmin` included — returns `403` with error code `41002`. It's a server-side global filter, not a matter of hiding a few buttons in the UI.
+Customer import is **dry-run** by default (`CrmDemo:ImportDryRun=true`): trial accounts can complete upload / preview / validate / commit, and the commit result is clearly marked as not written to the database. Export uses the same query as the list and still respects data scope.
 
-That's exactly how [tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login) runs: this repo's `docker-compose.yml` brings up the full stack, and the server layers a `docker-compose.override.yml` on top to flip the switch. Deployment, backup, and rollback are recorded in the [ledger](docs/app-ledger.md)'s P4 section. Leave it alone locally — it's off by default.
+Global `TenonAdmin:DemoMode=true` blocks **every** non-GET (including import POSTs), which fights the import wizard. For the public deploy, keep DemoMode **off** and rely on: no add/update/delete grants for trial roles + import dry-run. Set `ImportDryRun` to `false` only when you want real inserts locally.
 
 ## 📌 Version alignment
 
-Currently pinned to the stable `0.3.3` release: `TenonAdmin` and `TenonAdmin.Templates` `0.3.3` on NuGet, source tag `v0.3.3`. The backend was generated with `dotnet new tenon-app`, and its `Dockerfile` adopted the fix that `0.3.3` shipped ahead of that release (see the [v0.3.3 upgrade record](docs/v0.3.3-upgrade.md)). The frontend was extracted from `Tenon-Net/TenonAdmin/web#v0.3.2`, and upstream `web/` hasn't changed since.
+Currently pinned to the stable `0.5.0` release: `TenonAdmin` / `TenonAdmin.Excel` / `TenonAdmin.Templates` `0.5.0` on NuGet, source tag `v0.5.0`; frontend from `Tenon-Net/TenonAdmin/web#v0.5.0`. Upgrade notes: [v0.5.0 upgrade record](docs/v0.5.0-upgrade.md).
 
 The version in `tenon-example.csproj` must match that paragraph exactly. Every kernel release gets bumped and re-verified here — this repo doubles as the kernel's permanent integration canary, and a canary running an old version isn't in the cage.
 
 Reproducing the same artifacts from an empty directory:
 
 ```powershell
-dotnet new install TenonAdmin.Templates@0.3.3
+dotnet new install TenonAdmin.Templates@0.5.0
 dotnet new tenon-app --output tenon-example
 Set-Location tenon-example
-npx degit Tenon-Net/TenonAdmin/web#v0.3.3 web
+npx degit Tenon-Net/TenonAdmin/web#v0.5.0 web
 ```
 
 Then follow the two sections above. Staged implementation records, verification evidence, and the list of things that bit us as a consumer all live in `docs/`.

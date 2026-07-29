@@ -2,12 +2,12 @@
 
 ## Provenance
 
-- Stable package release: `0.3.3`
-- TenonAdmin source: tag `v0.3.3`, commit `33d84f247aeb6f73d23c125c916f8430a330aecc`
-- Backend template: `TenonAdmin.Templates@0.3.3`
-- Frontend source: `Tenon-Net/TenonAdmin/web#v0.3.2` (no upstream `web/` change in `v0.3.3`)
+- Stable package release: `0.5.0` (`TenonAdmin` + `TenonAdmin.Excel`)
+- TenonAdmin source: tag `v0.5.0`
+- Backend template: `TenonAdmin.Templates@0.5.0`
+- Frontend source: `Tenon-Net/TenonAdmin/web#v0.5.0`
 
-P0 was first validated against `0.3.0`; the upgrade to `0.3.1` and the full gate re-run are recorded in [v0.3.1 revalidation](v0.3.1-revalidation.md). `0.3.2` shipped the upstream fix for the second dogfood finding (missing launch profile); the upgrade and adoption of the real fix over the interim workaround are recorded in [v0.3.2 upgrade](v0.3.2-upgrade.md). `0.3.3` shipped the upstream fix for the third dogfood finding (Dockerfile broke on hyphenated project names); this repo already had the fix applied directly, so the upgrade is recorded as a version-alignment bump in [v0.3.3 upgrade](v0.3.3-upgrade.md).
+P0 was first validated against `0.3.0`; later bumps: [v0.3.1](v0.3.1-revalidation.md), [v0.3.2](v0.3.2-upgrade.md), [v0.3.3](v0.3.3-upgrade.md), **[v0.5.0](v0.5.0-upgrade.md)** (Excel + customer import/export dry-run + frontend re-extract).
 
 This ledger owns the detailed implementation work for P1-P4. The strategic ledger and kernel/template dogfood intake remain in `TenonAdmin`.
 

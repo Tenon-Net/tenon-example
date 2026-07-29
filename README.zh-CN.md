@@ -1,4 +1,4 @@
-<!-- 本文件为 README 的中文基准版；README.md、README.ja.md 以本文件为准同步 -->
+﻿<!-- 本文件为 README 的中文基准版；README.md、README.ja.md 以本文件为准同步 -->
 
 [English](README.md) | 简体中文 | [日本語](README.ja.md)
 
@@ -74,25 +74,25 @@ npm run dev
 
 dev server 会把 API 和 OpenAPI 契约代理到 `http://localhost:5100`。`npm run typecheck` 和 `npm run lint` 是提交前该跑的两条。
 
-## 🔒 演示模式
+## 🔒 演示模式与导入体验
 
-`TenonAdmin:DemoMode=true`（环境变量写作 `TenonAdmin__DemoMode=true`）一开，所有账号（含 `superAdmin`）的非 `GET` 请求一律返回 `403`，错误码 `41002`。这是服务端的全局过滤器，不是前端藏几个按钮。
+客户导入走 **dry-run**（`CrmDemo:ImportDryRun`，默认 `true`）：试用账号可以完整走上传 / 预览 / 校验 / 提交，提交结果会标明「未写入数据库」，避免脏数据。导出与列表同源，仍受数据权限过滤。
 
-[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login) 就这么跑的：本仓库的 `docker-compose.yml` 起完整技术栈，服务器上再叠一份 `docker-compose.override.yml` 把开关打开。部署、备份、回滚记录在[执行台账](docs/app-ledger.md)的 P4。本地开发不用管它，默认是关的。
+全局 `TenonAdmin:DemoMode=true` 会拦掉**所有**非 GET（含导入 POST），和导入体验冲突。公开部署请**关掉 DemoMode**，写操作靠：试用账号不授增删改权限 + 导入 dry-run。本地 dogfood 真落库时把 `ImportDryRun` 设为 `false`。
 
 ## 📌 版本对齐
 
-当前锁定在稳定版 `0.3.3`：NuGet 上的 `TenonAdmin` 与 `TenonAdmin.Templates` 都是 `0.3.3`，对应源码 tag `v0.3.3`。后端由 `dotnet new tenon-app` 生成，其中 `Dockerfile` 提前采用了 `0.3.3` 才发布的修复（见 [v0.3.3 升级记录](docs/v0.3.3-upgrade.md)）；前端提取自 `Tenon-Net/TenonAdmin/web#v0.3.2`，此后上游 `web/` 没有任何改动。
+当前锁定在稳定版 `0.5.0`：NuGet 上的 `TenonAdmin` / `TenonAdmin.Excel` / `TenonAdmin.Templates` 都是 `0.5.0`，对应源码 tag `v0.5.0`；前端提取自 `Tenon-Net/TenonAdmin/web#v0.5.0`。升级与验证见 [v0.5.0 升级记录](docs/v0.5.0-upgrade.md)。
 
 `tenon-example.csproj` 里的版本号必须和上面这段严格一致。内核每发一个版本，这里跟着 bump 一次并重验一遍——这个仓库同时也是内核的永久集成金丝雀，版本落后就等于金丝雀没在笼子里。
 
 从空目录复现同一套产物：
 
 ```powershell
-dotnet new install TenonAdmin.Templates@0.3.3
+dotnet new install TenonAdmin.Templates@0.5.0
 dotnet new tenon-app --output tenon-example
 Set-Location tenon-example
-npx degit Tenon-Net/TenonAdmin/web#v0.3.3 web
+npx degit Tenon-Net/TenonAdmin/web#v0.5.0 web
 ```
 
 然后照上面「跑起来」两节走。分阶段的实现记录、验证证据和踩坑清单都在 `docs/`。

@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { h, onMounted, reactive, ref } from 'vue'
 import {
-  NButton, NForm, NFormItem, NInput, NInputNumber, NPopconfirm, NSelect, NSpace, NTag,
+  NAlert, NButton, NForm, NFormItem, NInput, NInputNumber, NPopconfirm, NSelect, NSpace, NTag,
   useMessage, type FormInst, type FormRules,
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { ProTable, type ProTableColumn, type ProTableInst } from 'tenon-naive-pro-table'
 import AppIcon from '@/components/AppIcon.vue'
 import FormContainer from '@/components/FormContainer/index.vue'
+import ImportWizard, { type ImportWizardApi } from '@/components/ImportWizard/index.vue'
+import ExportColumnsModal from '@/components/ExportColumnsModal/index.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
 import { customerApi } from '@/api/crm'
 import { translateError } from '@/utils/error'
+import { triggerBlobDownload } from '@/utils/download'
+import type { ExportColumnDef } from '@/types/api'
 import { CustomerScopeKind, CustomerStatus, type Customer, type CustomerInput, type CustomerScope } from '@/types/crm'
 
 const { t } = useI18n()
@@ -89,8 +93,7 @@ const columns: ProTableColumn<Customer>[] = [
     title: () => t('common.operation'),
     width: 140,
     hideInSetting: true,
-    // 编辑/删除按钮码与后端 [RolePermission] 一致;演示三账号只授了只读权限(§2 头条),
-    // 这里按钮跟着服务端授权走,别让人点了才被 403 拒绝。
+    // 编辑/删除按钮码与后端 [RolePermission] 一致;演示三账号只授了只读 + 导入导出。
     render: (r) => {
       const canUpdate = auth.hasPerm('PUT:/api/v1/biz/customer/{id}')
       const canDelete = auth.hasPerm('DELETE:/api/v1/biz/customer/{id}')
@@ -118,6 +121,60 @@ const columns: ProTableColumn<Customer>[] = [
 function onLoaded(_rows: Customer[], loadedTotal: number) {
   total.value = loadedTotal
   refreshScopeText()
+}
+
+// ── 导入 / 导出(公开 demo 下 commit dry-run,见 CrmDemo:ImportDryRun) ──
+const importShow = ref(false)
+const exportShow = ref(false)
+const exporting = ref(false)
+
+const customerExportColumns: ExportColumnDef[] = [
+  { key: 'Name', title: '客户名称' },
+  { key: 'Contact', title: '联系人' },
+  { key: 'Phone', title: '联系电话' },
+  { key: 'IntendedAmount', title: '意向金额' },
+  { key: 'Status', title: '跟进状态' },
+  { key: 'CreateTime', title: '创建时间', defaultSelected: false },
+]
+
+const customerImportApi: ImportWizardApi = {
+  downloadTemplate: () => customerApi.importTemplate(),
+  preview: (file, mapping) => customerApi.importPreview(file, mapping),
+  validate: (rows) => customerApi.importValidate(rows),
+  errorReport: (rows) => customerApi.importErrorReport(rows),
+  commit: async (rows, strategy) => {
+    const result = await customerApi.importCommit(rows, strategy)
+    // dry-run:计数是「若提交会怎样」,明确提示未写库,避免误解成真落库。
+    if (result.dryRun) {
+      message.info(t('crm.importDryRunHint', {
+        inserted: result.inserted,
+        updated: result.updated,
+        skipped: result.skipped,
+      }))
+    }
+    // ImportWizard 期望 ImportCommitResult;dryRun 字段多出来无害。
+    return result
+  },
+}
+
+async function onExport(keys: string[]) {
+  const p = tableRef.value?.params ?? {}
+  exporting.value = true
+  try {
+    const blob = await customerApi.export({
+      name: (p.name as string) || undefined,
+      sortField: (p.sortField as string) || undefined,
+      sortOrder: (p.sortOrder as string) || undefined,
+      columns: keys.join(','),
+    })
+    triggerBlobDownload(blob, '客户导出.xlsx')
+    exportShow.value = false
+    message.success(t('export.done'))
+  } catch (e) {
+    message.error(translateError(e))
+  } finally {
+    exporting.value = false
+  }
 }
 
 // ── 新增/编辑弹窗 ──
@@ -160,6 +217,10 @@ async function save() {
     {{ scopeText }}
   </n-alert>
 
+  <n-alert type="warning" :show-icon="true" style="margin-bottom: 12px">
+    {{ t('crm.importDryRunBanner') }}
+  </n-alert>
+
   <ProTable
     ref="tableRef"
     :columns="columns"
@@ -172,6 +233,14 @@ async function save() {
       <n-button v-auth="'POST:/api/v1/biz/customer/add'" type="primary" @click="openAdd">
         <template #icon><AppIcon icon="ph:plus" :size="16" /></template>
         {{ t('common.add') }}
+      </n-button>
+      <n-button v-auth="'POST:/api/v1/biz/customer/import/preview'" @click="importShow = true">
+        <template #icon><AppIcon icon="ph:upload-simple" :size="16" /></template>
+        {{ t('import.button') }}
+      </n-button>
+      <n-button v-auth="'GET:/api/v1/biz/customer/export'" @click="exportShow = true">
+        <template #icon><AppIcon icon="ph:download-simple" :size="16" /></template>
+        {{ t('export.button') }}
       </n-button>
     </template>
   </ProTable>
@@ -201,4 +270,18 @@ async function save() {
       </n-form-item>
     </n-form>
   </FormContainer>
+
+  <ImportWizard
+    v-model:show="importShow"
+    :api="customerImportApi"
+    template-file-name="客户导入模板.xlsx"
+    error-report-file-name="客户导入错误报告.xlsx"
+  />
+
+  <ExportColumnsModal
+    v-model:show="exportShow"
+    :columns="customerExportColumns"
+    :loading="exporting"
+    @confirm="onExport"
+  />
 </template>

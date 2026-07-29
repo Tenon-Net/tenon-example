@@ -1,4 +1,4 @@
-<!-- README.zh-CN.md（中国語が基準版）と同期を保つこと -->
+﻿<!-- README.zh-CN.md（中国語が基準版）と同期を保つこと -->
 
 [English](README.md) | [简体中文](README.zh-CN.md) | 日本語
 
@@ -74,25 +74,25 @@ npm run dev
 
 dev サーバーが API と OpenAPI コントラクトを `http://localhost:5100` へプロキシします。コミット前に走らせるのは `npm run typecheck` と `npm run lint` の 2 本。
 
-## 🔒 デモモード
+## 🔒 デモモードとインポート体験
 
-`TenonAdmin:DemoMode=true`（環境変数なら `TenonAdmin__DemoMode=true`）を有効にすると、`superAdmin` を含むすべてのアカウントの `GET` 以外のリクエストが、エラーコード `41002` とともに `403` を返します。UI でボタンを隠しているのではなく、サーバー側のグローバルフィルターです。
+顧客インポートはデフォルトで **dry-run**（`CrmDemo:ImportDryRun=true`）です。体験アカウントはアップロード / プレビュー / 検証 / 送信まで一通り使えますが、送信結果は「DB に書いていない」と明示されます。エクスポートは一覧と同じクエリで、データ権限も効いたままです。
 
-[tenonadmin.52moyu.net](https://tenonadmin.52moyu.net/login) はまさにこの構成です。本リポジトリの `docker-compose.yml` がフルスタックを立ち上げ、サーバー側で `docker-compose.override.yml` を重ねてスイッチを入れています。デプロイ・バックアップ・ロールバックの記録は[実行台帳](docs/app-ledger.md)の P4 に。ローカルでは触る必要はありません。デフォルトはオフです。
+グローバルな `TenonAdmin:DemoMode=true` は **すべての** 非 GET（インポート POST 含む）を止めるため、ウィザードと衝突します。公開デモでは DemoMode を **オフ** にし、体験ロールに増删改権限を与えない + dry-run で制御してください。ローカルで本当に書き込みたいときだけ `ImportDryRun=false`。
 
 ## 📌 バージョン整合
 
-現在は安定版 `0.3.3` に固定しています。NuGet の `TenonAdmin` と `TenonAdmin.Templates` がともに `0.3.3`、ソースは tag `v0.3.3`。バックエンドは `dotnet new tenon-app` で生成し、`Dockerfile` は `0.3.3` で出た修正を先行して取り込んでいます（[v0.3.3 アップグレード記録](docs/v0.3.3-upgrade.md)参照）。フロントエンドは `Tenon-Net/TenonAdmin/web#v0.3.2` から抽出したもので、その後上流の `web/` に変更はありません。
+現在は安定版 `0.5.0` に固定しています。NuGet の `TenonAdmin` / `TenonAdmin.Excel` / `TenonAdmin.Templates` が `0.5.0`、ソースは tag `v0.5.0`；フロントは `Tenon-Net/TenonAdmin/web#v0.5.0`。詳細は [v0.5.0 アップグレード記録](docs/v0.5.0-upgrade.md)。
 
 `tenon-example.csproj` のバージョンは、この段落と厳密に一致していなければなりません。カーネルがリリースされるたびにここも上げて検証し直します——このリポジトリはカーネルの常設インテグレーションカナリアも兼ねており、バージョンが古いカナリアは籠に入っていないのと同じだからです。
 
 空のディレクトリから同じ成果物を再現する手順：
 
 ```powershell
-dotnet new install TenonAdmin.Templates@0.3.3
+dotnet new install TenonAdmin.Templates@0.5.0
 dotnet new tenon-app --output tenon-example
 Set-Location tenon-example
-npx degit Tenon-Net/TenonAdmin/web#v0.3.3 web
+npx degit Tenon-Net/TenonAdmin/web#v0.5.0 web
 ```
 
 あとは上の 2 節に従ってください。段階ごとの実装記録、検証エビデンス、消費者としてハマった点の一覧はすべて `docs/` にあります。

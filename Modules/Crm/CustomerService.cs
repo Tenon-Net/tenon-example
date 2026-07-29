@@ -1,3 +1,4 @@
+using SqlSugar;
 using TenonAdmin.Core;
 using TenonAdmin.Services;
 using TenonAdmin.SqlSugar;
@@ -13,9 +14,26 @@ public class CustomerService(IRepository<Customer> customers, IOrgService orgs, 
 {
     /// <inheritdoc />
     public virtual async Task<PagedList<Customer>> PageAsync(CustomerPageInput input) =>
-        await customers.AsQueryable()
-            .WhereIF(!string.IsNullOrEmpty(input.Name), c => c.Name.Contains(input.Name!))
+        await BuildListQuery(input)
             .ToPagedListAsync(input, q => q.OrderByDescending(c => c.Id));
+
+    /// <inheritdoc />
+    public virtual async Task<IReadOnlyList<Customer>> ExportAsync(CustomerPageInput input)
+    {
+        // 多取一条判断是否超过内核 Excel 默认 MaxExportRows(50000);这里用保守上限 +1。
+        const int cap = 50_001;
+        var list = await BuildListQuery(input)
+            .OrderByDescending(c => c.Id)
+            .Take(cap)
+            .ToListAsync();
+        AdminException.ThrowIf(list.Count >= cap, ErrorCode.ExportRowLimitExceeded);
+        return list;
+    }
+
+    /// <summary>列表与导出共用的查询——名称模糊 + 全局数据范围过滤器。</summary>
+    protected virtual ISugarQueryable<Customer> BuildListQuery(CustomerPageInput input) =>
+        customers.AsQueryable()
+            .WhereIF(!string.IsNullOrEmpty(input.Name), c => c.Name.Contains(input.Name!));
 
     /// <inheritdoc />
     public virtual async Task<Customer> GetAsync(long id)

@@ -35,4 +35,8 @@ export default {
     shenzhen: 'Shenzhen Specialist · branch only',
     superAdmin: 'Super Admin · everything, bypasses scope',
   },
+  importDryRunBanner:
+    'Demo: the full import wizard works (upload / preview / validate / commit), but commit does not write to the database. Export uses the same query as the list and still respects data scope.',
+  importDryRunHint:
+    'Demo mode: validation passed — would insert {inserted}, update {updated}, skip {skipped}. Nothing was written.',
 }
