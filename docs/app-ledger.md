@@ -2,12 +2,12 @@
 
 ## Provenance
 
-- Stable package release: `0.5.0` (`TenonAdmin` + `TenonAdmin.Excel`)
-- TenonAdmin source: tag `v0.5.0`
-- Backend template: `TenonAdmin.Templates@0.5.0`
-- Frontend source: `Tenon-Net/TenonAdmin/web#v0.5.0`
+- Stable package release: `0.6.0` (`TenonAdmin` + `TenonAdmin.Excel`)
+- TenonAdmin source: tag `v0.6.0`
+- Backend template: `TenonAdmin.Templates@0.6.0`
+- Frontend source: `Tenon-Net/TenonAdmin/web#v0.6.0`
 
-P0 was first validated against `0.3.0`; later bumps: [v0.3.1](v0.3.1-revalidation.md), [v0.3.2](v0.3.2-upgrade.md), [v0.3.3](v0.3.3-upgrade.md), **[v0.5.0](v0.5.0-upgrade.md)** (Excel + customer import/export dry-run + frontend re-extract).
+P0 was first validated against `0.3.0`; later bumps: [v0.3.1](v0.3.1-revalidation.md), [v0.3.2](v0.3.2-upgrade.md), [v0.3.3](v0.3.3-upgrade.md), [v0.5.0](v0.5.0-upgrade.md) (Excel + customer import/export dry-run), **[v0.6.0](v0.6.0-upgrade.md)** (QA36 delegation, scoped user/org lists, job catalog, frontend re-extract).
 
 This ledger owns the detailed implementation work for P1-P4. The strategic ledger and kernel/template dogfood intake remain in `TenonAdmin`.
 

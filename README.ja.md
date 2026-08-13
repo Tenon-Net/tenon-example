@@ -82,17 +82,17 @@ dev サーバーが API と OpenAPI コントラクトを `http://localhost:5100
 
 ## 📌 バージョン整合
 
-現在は安定版 `0.5.0` に固定しています。NuGet の `TenonAdmin` / `TenonAdmin.Excel` / `TenonAdmin.Templates` が `0.5.0`、ソースは tag `v0.5.0`；フロントは `Tenon-Net/TenonAdmin/web#v0.5.0`。詳細は [v0.5.0 アップグレード記録](docs/v0.5.0-upgrade.md)。
+現在は安定版 `0.6.0` に固定しています。NuGet の `TenonAdmin` / `TenonAdmin.Excel` / `TenonAdmin.Templates` が `0.6.0`、ソースは tag `v0.6.0`；フロントは `Tenon-Net/TenonAdmin/web#v0.6.0`。詳細は [v0.6.0 アップグレード記録](docs/v0.6.0-upgrade.md)。
 
 `tenon-example.csproj` のバージョンは、この段落と厳密に一致していなければなりません。カーネルがリリースされるたびにここも上げて検証し直します——このリポジトリはカーネルの常設インテグレーションカナリアも兼ねており、バージョンが古いカナリアは籠に入っていないのと同じだからです。
 
 空のディレクトリから同じ成果物を再現する手順：
 
 ```powershell
-dotnet new install TenonAdmin.Templates@0.5.0
+dotnet new install TenonAdmin.Templates@0.6.0
 dotnet new tenon-app --output tenon-example
 Set-Location tenon-example
-npx degit Tenon-Net/TenonAdmin/web#v0.5.0 web
+npx degit Tenon-Net/TenonAdmin/web#v0.6.0 web
 ```
 
 あとは上の 2 節に従ってください。段階ごとの実装記録、検証エビデンス、消費者としてハマった点の一覧はすべて `docs/` にあります。

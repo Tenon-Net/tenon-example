@@ -82,17 +82,17 @@ Global `TenonAdmin:DemoMode=true` blocks **every** non-GET (including import POS
 
 ## 📌 Version alignment
 
-Currently pinned to the stable `0.5.0` release: `TenonAdmin` / `TenonAdmin.Excel` / `TenonAdmin.Templates` `0.5.0` on NuGet, source tag `v0.5.0`; frontend from `Tenon-Net/TenonAdmin/web#v0.5.0`. Upgrade notes: [v0.5.0 upgrade record](docs/v0.5.0-upgrade.md).
+Currently pinned to the stable `0.6.0` release: `TenonAdmin` / `TenonAdmin.Excel` / `TenonAdmin.Templates` `0.6.0` on NuGet, source tag `v0.6.0`; frontend from `Tenon-Net/TenonAdmin/web#v0.6.0`. Upgrade notes: [v0.6.0 upgrade record](docs/v0.6.0-upgrade.md).
 
 The version in `tenon-example.csproj` must match that paragraph exactly. Every kernel release gets bumped and re-verified here — this repo doubles as the kernel's permanent integration canary, and a canary running an old version isn't in the cage.
 
 Reproducing the same artifacts from an empty directory:
 
 ```powershell
-dotnet new install TenonAdmin.Templates@0.5.0
+dotnet new install TenonAdmin.Templates@0.6.0
 dotnet new tenon-app --output tenon-example
 Set-Location tenon-example
-npx degit Tenon-Net/TenonAdmin/web#v0.5.0 web
+npx degit Tenon-Net/TenonAdmin/web#v0.6.0 web
 ```
 
 Then follow the two sections above. Staged implementation records, verification evidence, and the list of things that bit us as a consumer all live in `docs/`.

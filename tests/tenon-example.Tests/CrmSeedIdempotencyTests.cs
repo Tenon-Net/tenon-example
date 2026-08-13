@@ -47,6 +47,7 @@ public class CrmSeedIdempotencyTests
         builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmUserRoleSeed>());
         builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmMenuSeed>());
         builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmRoleMenuSeed>());
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmHqAdminSystemMenuSeed>());
         builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmCustomerSeed>());
 
         var host = builder.Build();

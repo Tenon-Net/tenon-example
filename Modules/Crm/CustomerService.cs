@@ -10,7 +10,7 @@ namespace tenon_example.Modules.Crm;
 /// 读走 <c>AsQueryable()</c>,由内核全局过滤器按当前数据范围自动裁剪;改/删先 <c>GetByIdAsync</c>
 /// (同样经范围过滤)校验可见性,仓储写路径另有越权兜底(双保险,§8)。
 /// </summary>
-public class CustomerService(IRepository<Customer> customers, IOrgService orgs, IDataScopeContext scopeContext) : ICustomerService
+public class CustomerService(IRepository<Customer> customers, IRepository<SysOrg> orgs, IDataScopeContext scopeContext) : ICustomerService
 {
     /// <inheritdoc />
     public virtual async Task<PagedList<Customer>> PageAsync(CustomerPageInput input) =>
@@ -79,7 +79,11 @@ public class CustomerService(IRepository<Customer> customers, IOrgService orgs, 
 
     /// <inheritdoc />
     public virtual async Task<CustomerScopeDto> GetScopeAsync() =>
-        ComputeScope(await orgs.ListAsync(), scopeContext.Current);
+        ComputeScope(
+            // 0.6.0 起 IOrgService.ListAsync 会按当前范围裁剪(+祖先,QA08),缺掉的兄弟节点
+            // 会让「非整棵子树」被误判成 OrgAndChildren。分类必须对照完整机构树。
+            await orgs.AsQueryable().OrderBy(o => o.Sort).OrderBy(o => o.Id).ToListAsync(),
+            scopeContext.Current);
 
     /// <summary>
     /// 纯函数,便于单测:把生效数据范围翻译成结构化语义。规则(§3 P3 锁定):不受限=全部;

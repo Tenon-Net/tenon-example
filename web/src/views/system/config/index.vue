@@ -5,7 +5,9 @@ import { NTabs, NTabPane, NCard } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import SysBaseConfig from './components/SysBaseConfig.vue'
 import SecurityConfig from './components/SecurityConfig.vue'
+import ExternalAuthConfig from './components/ExternalAuthConfig.vue'
 import UploadConfig from './components/UploadConfig.vue'
+import JobConfig from './components/JobConfig.vue'
 import OtherConfig from './components/OtherConfig.vue'
 
 const { t } = useI18n()
@@ -27,9 +29,19 @@ const { t } = useI18n()
         <security-config />
       </n-card>
     </n-tab-pane>
+    <n-tab-pane name="externalAuth" :tab="t('config.tab.externalAuth')" display-directive="show:lazy">
+      <n-card :bordered="false" :title="t('config.tab.externalAuth')">
+        <external-auth-config />
+      </n-card>
+    </n-tab-pane>
     <n-tab-pane name="upload" :tab="t('config.tab.upload')" display-directive="show:lazy">
       <n-card :bordered="false" :title="t('config.tab.upload')">
         <upload-config />
+      </n-card>
+    </n-tab-pane>
+    <n-tab-pane name="job" :tab="t('config.tab.job')" display-directive="show:lazy">
+      <n-card :bordered="false" :title="t('config.tab.job')">
+        <job-config />
       </n-card>
     </n-tab-pane>
     <n-tab-pane name="other" :tab="t('config.tab.other')" display-directive="show:lazy">

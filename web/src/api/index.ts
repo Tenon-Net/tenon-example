@@ -1,4 +1,5 @@
 import { client } from './client'
+import type { components } from './schema'
 import type { AddUserInput, AddUserOutput, ChunkInitOutput, ConfigInput, CronPreviewOutput, DashboardSummary, DataScopeType, DictItem, DictItemInput, DictTypeInput, DuplicateStrategy, FileUploadOutput, ImportCommitResult, ImportPreview, ImportRow, JobDashboard, JobHandlersOutput, JobInput, LoginOutput, ModuleInput, ModuleRow, MyModulesOutput, MySessionItem, NoticeMineItem, NoticePublishInput, OnlineSessionItem, OrgInput, PagedList, PermissionRouteItem, PositionInput, RoleInput, ServerInfoOutput, SysConfig, SysDictItem, SysDictType, SysExceptionLog, SysFile, SysJob, SysJobLog, SysLoginLog, SysNotice, SysOpLog, SysOrg, SysPosition, SysRole, SysRoleDataScope, UpdateUserInput, UserDetail, UserItem, UserProfile } from '@/types/api'
 import type { MenuInput, MenuNode, MenuTreeNode } from '@/types/menu'
 
@@ -172,6 +173,12 @@ export const authApi = {
   /** 短信二次验证:重发验证码(服务端冷却/日上限,过频抛 40008)。 */
   smsChallengeResend: (body: { challengeId: string }) =>
     client.POST('/api/v1/auth/login/sms/resend', { body }).then((r) => unwrap<{ expiresSeconds: number; resendSeconds: number }>(r)),
+  /** TOTP 二次验证完成登录(40018 / SSO totpChallenge);走 openapi-fetch → CSRF/credentials 中间件生效。 */
+  totpChallengeLogin: (body: { challengeId: string; code: string }) =>
+    client.POST('/api/v1/auth/login/totp', { body }).then((r) => unwrap<LoginOutput>(r)),
+  /** 短时再认证(Level3 高危写操作 40024 后由中间件唤起;窗口约 5 分钟)。 */
+  reauth: (body: { method?: string; totpCode?: string; password?: string }) =>
+    client.POST('/api/v1/auth/reauth', { body }).then((r) => unwrap<void>(r)),
   /** 免密登录发码(图形验证码启用时须携带;响应不区分手机号是否存在,防枚举)。 */
   smsLoginSend: (body: { phone: string; captchaId?: string; captchaCode?: string }) =>
     client.POST('/api/v1/auth/sms/send', { body }).then((r) => unwrap<{ expiresSeconds: number; resendSeconds: number }>(r)),
@@ -180,10 +187,37 @@ export const authApi = {
     client.POST('/api/v1/auth/sms/login', { body }).then((r) => unwrap<LoginOutput>(r)),
 }
 
+/** TOTP 自助绑定 / 恢复 / 管理员清除(ADR 0006;无邀请路径)。 */
+export const mfaApi = {
+  bindStart: (body: components['schemas']['TotpBindStartInput']) =>
+    client.POST('/api/v1/auth/mfa/bind/start', { body }).then((r) => unwrap<components['schemas']['TotpBindStartOutput']>(r)),
+  bindComplete: (body: components['schemas']['TotpBindCompleteInput']) =>
+    client.POST('/api/v1/auth/mfa/bind/complete', { body }).then((r) => unwrap<components['schemas']['TotpBindCompleteOutput']>(r)),
+  recovery: (body: components['schemas']['TotpRecoveryInput']) =>
+    client.POST('/api/v1/auth/mfa/recovery', { body }).then((r) => unwrap<void>(r)),
+  clear: (body: components['schemas']['TotpClearMfaInput']) =>
+    client.POST('/api/v1/sys/mfa/clear', { body }).then((r) => unwrap<void>(r)),
+}
+
+/** 高敏权限自定义追加(内核默认只读;写操作须 reauth)。 */
+export const highSensApi = {
+  list: () =>
+    client.GET('/api/v1/sys/mfa/high-sensitivity', {}).then((r) => unwrap<components['schemas']['HighSensitivityPermissionList']>(r)),
+  add: (body: components['schemas']['HighSensitivityPermissionInput']) =>
+    client.POST('/api/v1/sys/mfa/high-sensitivity', { body }).then((r) => unwrap<components['schemas']['HighSensitivityPermissionItem']>(r)),
+  remove: (id: number) =>
+    client.DELETE('/api/v1/sys/mfa/high-sensitivity/{id}', { params: { path: { id } } }).then((r) => unwrap<void>(r)),
+}
+
 export interface ExternalProvider {
   code: string
   displayName: string
   icon?: string | null
+}
+
+/** 管理端:全部已注册 provider + enabled(含已禁用)。 */
+export interface ExternalProviderAdmin extends ExternalProvider {
+  enabled: boolean
 }
 
 export interface ExternalBinding {
@@ -197,12 +231,20 @@ export interface ExternalBinding {
 export const externalAuthApi = {
   /** 登录页可用的外部登录方式(启用的);空数组 = 不显 SSO 区。 */
   providers: () => client.GET('/api/v1/auth/external/providers', {}).then((r) => unwrap<ExternalProvider[]>(r)),
+  /** 管理端全量列表(含已禁用);系统配置「第三方登录」Tab。 */
+  providersAll: () =>
+    client.GET('/api/v1/auth/external/providers/all', {}).then((r) => unwrap<ExternalProviderAdmin[]>(r)),
   /** 发起某 provider 登录的 URL(顶层浏览器导航,不走 fetch —— 后端 302 跳 IdP)。 */
   authorizeUrl: (code: string) =>
     `${import.meta.env.VITE_API_BASE ?? ''}/api/v1/auth/external/${encodeURIComponent(code)}/authorize`,
   /** 一次性票据换令牌(登录回调后);票据无效/过期/已用抛 40014。 */
   exchange: (ticket: string) =>
     client.POST('/api/v1/auth/external/exchange', { body: { ticket } }).then((r) => unwrap<LoginOutput>(r)),
+  /** 认领未绑定 SSO 的 pending-link(账密登录后);票据无效 40014,已被他人绑 40017。 */
+  claimPendingLink: (pendingLink: string) =>
+    client
+      .POST('/api/v1/auth/external/pending-link/claim', { body: { pendingLink } })
+      .then((r) => unwrap<boolean>(r)),
   /** 我的外部账号绑定列表(个人中心)。 */
   bindings: () => client.GET('/api/v1/auth/external/bindings', {}).then((r) => unwrap<ExternalBinding[]>(r)),
   /** 发起绑定:返回授权 URL,前端跳转开始 OAuth 往返(回调把身份绑到当前用户)。 */

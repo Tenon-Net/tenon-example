@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
-import { NForm, NFormItem, NInput, NCheckbox, useMessage } from 'naive-ui'
+import { reactive, ref, computed, onMounted, onBeforeUnmount, h } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { NAlert, NForm, NFormItem, NInput, NCheckbox, NModal, NDropdown, useMessage, type DropdownOption } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { useI18n } from 'vue-i18n'
 import { authApi, externalAuthApi, ApiError } from '@/api'
 import type { LoginOutput } from '@/types/api'
 import { useUserStore } from '@/stores/user'
+import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useSite } from '@/composables/useSite'
+import { resetRouter } from '@/router'
 import { btnGrad, glowSh } from '@/theme/mix'
 import { translateError } from '@/utils/error'
+import { splitLoginProviders, PREVIEW_ALL_SSO_BRANDS, previewAllBrandProviders } from '@/utils/oauthBrand'
 import TenonLogo from '@/components/TenonLogo.vue'
+import BrandIcon from '@/components/oauth/BrandIcon.vue'
 
 // 皮肤外壳自带品牌栏时(如双栏),不再在卡内重复 logo/标题/页脚(showFooter=false 由外壳自绘版权)。
 withDefaults(defineProps<{ showLogo?: boolean; showTitle?: boolean; showFooter?: boolean }>(), {
@@ -21,28 +25,55 @@ withDefaults(defineProps<{ showLogo?: boolean; showTitle?: boolean; showFooter?:
 })
 
 const router = useRouter()
+const route = useRoute()
 const message = useMessage()
 const { t } = useI18n()
 const user = useUserStore()
+const auth = useAuthStore()
 const app = useAppStore()
 const { site, appVersion, loadSite } = useSite()
 const year = new Date().getFullYear()
 
-// ponytail: 开发环境预填超管账号密码,免得每次手敲;生产(build)下 import.meta.env.DEV 为 false,留空
+/** 未绑定 SSO 后带回:登录成功后须确认再 claim(防静默抢绑) */
+const pendingLink = computed(() =>
+  typeof route.query.pendingLink === 'string' ? route.query.pendingLink : '',
+)
+const pendingProvider = computed(() =>
+  typeof route.query.provider === 'string' ? route.query.provider : '',
+)
+const pendingDisplayName = computed(() =>
+  typeof route.query.displayName === 'string' ? route.query.displayName : '',
+)
+const pendingConfirmShow = ref(false)
+const pendingClaimBusy = ref(false)
+const pendingClaimToken = ref('')
+
+// ponytail: 开发环境预填超管账号密码,免得每次手敲;生产(build)下 import.meta.env.DEV 为 false,留空。
+// SSO pending-link 场景故意不预填密码:解绑后 GitHub 会落到本页,预填+一点就 claim 看起来像「SSO 直接进了」。
 const model = reactive(
-  import.meta.env.DEV
+  import.meta.env.DEV && !pendingLink.value
     ? { account: 'superAdmin', password: 'Aa123456', remember: true }
-    : { account: '', password: '', remember: true },
+    : {
+        account: import.meta.env.DEV ? 'superAdmin' : '',
+        password: '',
+        remember: true,
+      },
 )
 const loading = ref(false)
 
-// 登录形态:账号密码 / 短信免密(sys.security.smsLogin.enabled 运行时驱动)/ 短信二次验证(密码过后 40009 信令进入)
-const mode = ref<'account' | 'sms' | 'mfa'>('account')
+// 登录形态:账号密码 / 短信免密 / 短信二次验证(40009) / TOTP 二次验证(40018)
+// 强制 MFA 未绑定(40020)用 Modal 引导,不切 mode,登录页默认也不常驻绑定链接
+const mode = ref<'account' | 'sms' | 'mfa' | 'totp'>('account')
 
 // 短信免密登录
 const smsModel = reactive({ phone: '', code: '' })
 // 二次验证挑战(40009 信令 args 下发)
 const mfa = reactive({ challengeId: '', phoneMask: '', code: '' })
+// TOTP 挑战(40018)
+const totp = reactive({ challengeId: '', code: '' })
+// 强制 MFA 但未绑定(40020):弹窗 + 带到 /mfa/bind 的账号
+const bindRequiredShow = ref(false)
+const bindAccount = ref('')
 
 // 发码/重发共用倒计时(同一时刻只有一个发码入口可见)
 const countdown = ref(0)
@@ -97,28 +128,115 @@ onMounted(async () => {
     await loadCaptcha()
   }
   void loadSsoProviders()
+
+  // SSO 回调带回的 TOTP 挑战:直接进入 totp 完成态
+  const q = router.currentRoute.value.query
+  const ch = typeof q.totpChallenge === 'string' ? q.totpChallenge : ''
+  if (ch) {
+    totp.challengeId = ch
+    totp.code = ''
+    mode.value = 'totp'
+  }
 })
 
 // 英雄按钮:accent 派生渐变 + 发光(仅登录页/英雄区)。
 const heroStyle = computed(() => ({ background: btnGrad(app.accent), boxShadow: glowSh(app.accent) }))
 
-// 第三方登录:后端 GET providers 驱动(仅点亮已启用的)。点击顶层导航到 authorize,后端 302 跳 IdP。
+// 第三方登录:默认后端 providers 驱动;PREVIEW_ALL_SSO_BRANDS 时铺全品牌图(图标验收)。
 const ssoProviders = ref<{ code: string; displayName: string; icon?: string | null }[]>([])
+const pendingProviderLabel = computed(() => {
+  const code = pendingProvider.value
+  if (!code) return t('oauth.thirdParty')
+  const hit = ssoProviders.value.find((p) => p.code === code)
+  return hit?.displayName || code
+})
+const ssoDisplayList = computed(() =>
+  PREVIEW_ALL_SSO_BRANDS ? previewAllBrandProviders() : ssoProviders.value,
+)
+// 预览全图标时不截断;正常模式 N=4 溢出
+const ssoSplit = computed(() =>
+  PREVIEW_ALL_SSO_BRANDS
+    ? { visible: ssoDisplayList.value, overflow: [] as typeof ssoDisplayList.value }
+    : splitLoginProviders(ssoDisplayList.value),
+)
+const ssoOverflowOptions = computed<DropdownOption[]>(() =>
+  ssoSplit.value.overflow.map((p) => ({
+    key: p.code,
+    label: () =>
+      h(
+        'span',
+        {
+          class: 'lf-sso-menu-item',
+          style: { display: 'inline-flex', alignItems: 'center', gap: '8px' },
+        },
+        [h(BrandIcon, { code: p.code, icon: p.icon, size: 20 }), h('span', null, p.displayName)],
+      ),
+  })),
+)
 async function loadSsoProviders() {
   try {
     ssoProviders.value = await externalAuthApi.providers()
   } catch {
-    // 未配置外部登录或拉取失败:整段 SSO 区不显
+    // 未配置外部登录或拉取失败:整段 SSO 区不显(预览全图标模式仍会显示)
   }
 }
-function onSso(code: string) {
-  window.location.href = externalAuthApi.authorizeUrl(code)
+/** 顶层跳 IdP(与 Gitee 一样用 <a href>)。预览假项仍给 authorize 链,未配后端会失败。 */
+function ssoHref(code: string) {
+  return externalAuthApi.authorizeUrl(code)
+}
+function onSsoOverflow(key: string | number) {
+  window.location.href = ssoHref(String(key))
 }
 
-function finishLogin(res: LoginOutput) {
+async function enterHome() {
+  await router.replace('/')
+}
+
+async function finishLogin(res: LoginOutput) {
+  // 每次登录都清动态路由/授权态,否则上次会话的 routesReady=true 会跳过 enterInitial,
+  // 菜单壳在、业务路由未重建 → 进系统后处处 404(绑定 MFA 后回登录再登最易踩中)。
+  resetRouter()
+  auth.reset()
   user.setSession(res)
+
+  // 现场绑定:不静默 claim——须用户确认,并依赖服务端 binder cookie 同浏览器校验
+  const link = pendingLink.value
+  if (link) {
+    pendingClaimToken.value = link
+    pendingConfirmShow.value = true
+    return
+  }
   message.success(t('login.success'))
-  router.replace('/')
+  await enterHome()
+}
+
+const pendingConfirmIdentity = computed(() =>
+  pendingDisplayName.value
+    ? t('oauth.pendingLinkIdentity', { display: pendingDisplayName.value })
+    : '',
+)
+
+async function confirmPendingBind() {
+  if (pendingClaimBusy.value) return
+  pendingClaimBusy.value = true
+  try {
+    await externalAuthApi.claimPendingLink(pendingClaimToken.value)
+    message.success(t('oauth.pendingLinkSuccess', { name: pendingProviderLabel.value }))
+  } catch (e) {
+    message.warning(translateError(e))
+  } finally {
+    pendingClaimBusy.value = false
+    pendingConfirmShow.value = false
+    pendingClaimToken.value = ''
+  }
+  await enterHome()
+}
+
+async function skipPendingBind() {
+  pendingConfirmShow.value = false
+  pendingClaimToken.value = ''
+  message.success(t('login.success'))
+  await enterHome()
 }
 
 // CRM 演示头条:三个试用账号(种子数据固定,任何环境都存在)一键填入并登录,
@@ -140,6 +258,7 @@ function quickLogin(account: string, password: string) {
 
 async function onSubmit() {
   if (mode.value === 'mfa') return onMfaSubmit()
+  if (mode.value === 'totp') return onTotpSubmit()
   if (mode.value === 'sms') return onSmsSubmit()
 
   if (!model.account || !model.password) {
@@ -157,10 +276,19 @@ async function onSubmit() {
       password: model.password,
       ...(captchaEnabled.value ? { captchaId: captchaId.value, captchaCode: captchaCode.value } : {}),
     })
-    finishLogin(res)
+    await finishLogin(res)
   } catch (e) {
-    // 40009 = 密码已过、需短信二次验证(信令而非失败):切码输入页,args 带挑战与倒计时参数
-    if (e instanceof ApiError && e.code === 40009 && e.args) {
+    // 40018 = 密码已过、需 TOTP 二次验证
+    if (e instanceof ApiError && e.code === 40018 && e.args) {
+      totp.challengeId = String(e.args.challengeId ?? '')
+      totp.code = ''
+      mode.value = 'totp'
+    } else if (e instanceof ApiError && e.code === 40020) {
+      // 40020 = 强制 MFA 未绑定 → Modal 引导自助设置(登录页默认不常驻链接)
+      bindAccount.value = model.account.trim()
+      bindRequiredShow.value = true
+    } else if (e instanceof ApiError && e.code === 40009 && e.args) {
+      // 40009 = 密码已过、需短信二次验证
       mfa.challengeId = String(e.args.challengeId ?? '')
       mfa.phoneMask = String(e.args.phoneMask ?? '')
       mfa.code = ''
@@ -175,6 +303,21 @@ async function onSubmit() {
   }
 }
 
+function closeBindRequired() {
+  bindRequiredShow.value = false
+}
+
+function goBindAuthenticator() {
+  const account = bindAccount.value || model.account.trim()
+  bindRequiredShow.value = false
+  void router.push({ path: '/mfa/bind', query: account ? { account } : {} })
+}
+
+function goRecovery() {
+  const account = model.account.trim() || bindAccount.value
+  void router.push({ path: '/mfa/bind', query: { ...(account ? { account } : {}), mode: 'recovery' } })
+}
+
 async function onMfaSubmit() {
   if (!mfa.code) {
     message.warning(t('login.smsCodePlaceholder'))
@@ -182,7 +325,22 @@ async function onMfaSubmit() {
   }
   loading.value = true
   try {
-    finishLogin(await authApi.smsChallengeLogin({ challengeId: mfa.challengeId, code: mfa.code }))
+    await finishLogin(await authApi.smsChallengeLogin({ challengeId: mfa.challengeId, code: mfa.code }))
+  } catch (e) {
+    message.error(translateError(e))
+  } finally {
+    loading.value = false
+  }
+}
+
+async function onTotpSubmit() {
+  if (!totp.code) {
+    message.warning(t('login.totpPlaceholder'))
+    return
+  }
+  loading.value = true
+  try {
+    await finishLogin(await authApi.totpChallengeLogin({ challengeId: totp.challengeId, code: totp.code }))
   } catch (e) {
     message.error(translateError(e))
   } finally {
@@ -205,6 +363,8 @@ function backToAccount() {
   mode.value = 'account'
   mfa.challengeId = ''
   mfa.code = ''
+  totp.challengeId = ''
+  totp.code = ''
 }
 
 async function onSendSmsCode() {
@@ -237,7 +397,7 @@ async function onSmsSubmit() {
   }
   loading.value = true
   try {
-    finishLogin(await authApi.smsLogin({ phone: smsModel.phone, code: smsModel.code }))
+    await finishLogin(await authApi.smsLogin({ phone: smsModel.phone, code: smsModel.code }))
   } catch (e) {
     message.error(translateError(e))
   } finally {
@@ -255,6 +415,16 @@ async function onSmsSubmit() {
       <span class="lf-word">{{ site.title }}</span>
     </div>
 
+    <n-alert
+      v-if="pendingLink"
+      type="info"
+      :bordered="false"
+      class="lf-pending-alert"
+      :title="t('oauth.pendingLinkTitle', { name: pendingProviderLabel })"
+    >
+      {{ t('oauth.pendingLinkHint', { name: pendingProviderLabel }) }}
+    </n-alert>
+
     <!-- 短信二次验证:密码已过,凭挑战 + 短信码完成登录 -->
     <template v-if="mode === 'mfa'">
       <h2 v-if="showTitle" class="lf-title">{{ t('login.mfaTitle', { phone: mfa.phoneMask }) }}</h2>
@@ -270,6 +440,26 @@ async function onSmsSubmit() {
           <a class="lf-link" :class="{ 'lf-link-disabled': countdown > 0 }" @click="onMfaResend">
             {{ countdown > 0 ? t('login.resendAfter', { s: countdown }) : t('login.sendCode') }}
           </a>
+        </div>
+        <button class="hero-btn" type="button" :style="heroStyle" :disabled="loading" @click.prevent="onSubmit">
+          {{ loading ? t('common.loading') : t('login.submit') }}
+        </button>
+      </n-form>
+    </template>
+
+    <!-- TOTP 二次验证:密码已过,凭 Authenticator 动态口令完成登录 -->
+    <template v-else-if="mode === 'totp'">
+      <h2 v-if="showTitle" class="lf-title">{{ t('login.totpTitle') }}</h2>
+      <p class="lf-hint-line">{{ t('login.totpSub') }}</p>
+      <n-form @keyup.enter="onSubmit">
+        <n-form-item :label="t('login.totpCode')" path="code">
+          <n-input v-model:value="totp.code" :placeholder="t('login.totpPlaceholder')" size="large" :maxlength="6">
+            <template #prefix><Icon icon="ph:shield-check" /></template>
+          </n-input>
+        </n-form-item>
+        <div class="row lf-between">
+          <a class="lf-link" @click="backToAccount">{{ t('login.backToPassword') }}</a>
+          <a class="lf-link" @click="goRecovery">{{ t('login.useRecovery') }}</a>
         </div>
         <button class="hero-btn" type="button" :style="heroStyle" :disabled="loading" @click.prevent="onSubmit">
           {{ loading ? t('common.loading') : t('login.submit') }}
@@ -341,7 +531,7 @@ async function onSmsSubmit() {
         </button>
       </n-form>
 
-      <!-- CRM 演示三试用账号:一键填账号密码并登录,数据范围当场对比。 -->
+      <!-- CRM 演示试用账号:一键填账号密码并登录,数据范围当场对比。 -->
       <div v-if="mode === 'account'" class="lf-trial">
         <span class="lf-trial-label">{{ t('crm.trialLogin.label') }}</span>
         <div class="lf-trial-btns">
@@ -358,14 +548,37 @@ async function onSmsSubmit() {
         </div>
       </div>
 
-      <!-- 第三方登录:后端 providers 驱动;无启用项则整段不显。点击顶层跳转到 IdP(OAuth2 授权码往返)。 -->
-      <template v-if="ssoProviders.length">
+      <!-- 第三方登录:Gitee 风圆标;<a href>。PREVIEW_ALL_SSO_BRANDS 时展示全部品牌图。 -->
+      <template v-if="ssoDisplayList.length">
         <div class="lf-divider"><span>{{ t('login.otherMethods') }}</span></div>
         <div class="lf-sso">
-          <button v-for="p in ssoProviders" :key="p.code" class="lf-sso-btn" type="button" @click="onSso(p.code)">
-            <Icon v-if="p.icon" :icon="p.icon" class="lf-sso-icon" />
-            {{ p.displayName }}
-          </button>
+          <a
+            v-for="p in ssoSplit.visible"
+            :key="p.code"
+            class="lf-sso-btn"
+            :href="ssoHref(p.code)"
+            :title="p.displayName"
+            :aria-label="p.displayName"
+          >
+            <BrandIcon :code="p.code" :icon="p.icon" :size="32" />
+          </a>
+          <n-dropdown
+            v-if="ssoSplit.overflow.length"
+            trigger="click"
+            :options="ssoOverflowOptions"
+            @select="onSsoOverflow"
+          >
+            <a
+              class="lf-sso-btn lf-sso-more"
+              href="javascript:void(0)"
+              role="button"
+              :title="t('login.moreMethods')"
+              :aria-label="t('login.moreMethods')"
+              @click.prevent
+            >
+              <Icon icon="ph:dots-three-bold" :width="18" />
+            </a>
+          </n-dropdown>
         </div>
       </template>
     </template>
@@ -379,6 +592,40 @@ async function onSmsSubmit() {
       </span>
       <span v-if="appVersion" class="lf-ver">v{{ appVersion }}</span>
     </footer>
+
+    <!-- 强制 MFA 未绑定(40020):遮罩 Modal,账密表单仍在底下;默认登录页不常驻绑定链接 -->
+    <n-modal
+      v-model:show="bindRequiredShow"
+      preset="dialog"
+      type="warning"
+      :title="t('login.totpBindTitle')"
+      :content="t('login.totpBindSub')"
+      :positive-text="t('login.setupAuthenticator')"
+      :negative-text="t('common.cancel')"
+      @positive-click="goBindAuthenticator"
+      @negative-click="closeBindRequired"
+    />
+    <!-- pending-link:登录后显式确认绑定,防静默抢绑 -->
+    <n-modal
+      v-model:show="pendingConfirmShow"
+      preset="dialog"
+      type="info"
+      :title="t('oauth.pendingLinkConfirmTitle')"
+      :content="
+        t('oauth.pendingLinkConfirmContent', {
+          name: pendingProviderLabel,
+          identity: pendingConfirmIdentity,
+          account: user.userInfo?.account ?? '',
+        })
+      "
+      :positive-text="t('oauth.pendingLinkConfirmOk')"
+      :negative-text="t('oauth.pendingLinkConfirmSkip')"
+      :loading="pendingClaimBusy"
+      :closable="false"
+      :mask-closable="false"
+      @positive-click="confirmPendingBind"
+      @negative-click="skipPendingBind"
+    />
   </div>
 </template>
 
@@ -386,6 +633,11 @@ async function onSmsSubmit() {
 /* 文字色默认跟随应用令牌;皮肤可通过 --lf-title / --lf-hint 覆盖(如极光深色皮肤强制浅色)。 */
 .login-form {
   width: 100%;
+}
+.lf-pending-alert {
+  margin-bottom: 16px;
+  border-radius: 10px;
+  text-align: left;
 }
 .lf-brand {
   display: flex;
@@ -513,7 +765,7 @@ async function onSmsSubmit() {
   opacity: 0.7;
   cursor: not-allowed;
 }
-/* CRM 演示三试用账号:弱化标签 + 一行可换行的药丸按钮,不抢主登录表单的视觉重心 */
+/* CRM 演示试用账号:弱化标签 + 一行可换行的药丸按钮,不抢主登录表单的视觉重心 */
 .lf-trial {
   margin: 4px 0 18px;
 }
@@ -568,34 +820,43 @@ async function onSmsSubmit() {
 }
 .lf-sso {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px; /* 贴近 Gitee 一排小圆间距 */
 }
+/* Gitee 风:约 32px 圆标(原先 40 偏大) */
 .lf-sso-btn {
-  flex: 1;
-  height: 44px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  border: 1.5px solid var(--lf-border, var(--color-border));
-  border-radius: 11px;
-  background: var(--color-fill);
-  font-size: 13px;
-  color: var(--lf-title, var(--color-text-secondary));
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
   cursor: pointer;
-  transition:
-    border-color var(--transition-fast),
-    color var(--transition-fast),
-    background var(--transition-fast);
+  overflow: hidden;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
+/* 不 hover 放大(Gitee 同款静态圆标) */
 .lf-sso-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: var(--color-primary-light);
+  text-decoration: none;
+  color: inherit;
 }
 .lf-sso-btn:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+.lf-sso-more {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--lf-border, var(--color-border));
+  background: var(--color-fill, #f5f5f5);
+  color: var(--color-text-tertiary, #999);
 }
 /* 页脚:版权 + 版本号,弱化色,与 SSO 区留白 */
 .lf-foot {
