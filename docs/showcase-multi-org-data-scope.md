@@ -14,7 +14,6 @@ public virtual async Task<PagedList<Customer>> PageAsync(CustomerPageInput input
 | `总部管理员` | `Trial@123456` | 全部机构 | 214 |
 | `华南区域经理` | `Trial@123456` | 华南大区及其下属分部 | 128 |
 | `深圳专员` | `Trial@123456` | 仅深圳分部 | 42 |
-| `superAdmin` | `TenonExample@675b52d8` | 不受限 | 214 |
 
 ![总部管理员看到全部 214 行](assets/hq-admin-214.png)
 ![华南区域经理看到 128 行](assets/south-manager-128.png)
@@ -40,7 +39,7 @@ public virtual async Task<PagedList<Customer>> PageAsync(CustomerPageInput input
 
 总部管理员反过来，除了 CRM 还被授予了内核自带的整套系统管理菜单：组织、用户、角色、菜单、字典、配置、日志、文件，所有按钮都在。它走的是和真实项目一样的角色授权，`superAdmin` 那条绕过路径没参与。这也是这个仓库想说明的第二件事：它演示的是内核完整的后台能力，CRM 只是长在上面的第一个业务模块。
 
-上面说的都是真授权，总部管理员那套系统管理按钮点下去是真会执行的。所以线上另外挂了一道闸门（`CrmDemo:ReadOnly`）：除登录和导入外，一切非 GET 返回 `403` / `41002`。按钮照常渲染、照常点，只是够不着数据库。四个账号的密码就写在 README 里，公开演示靠的是这道闸门，不是密码。唯一放行的写路径是导入向导，它跑 dry-run（`CrmDemo:ImportDryRun=true`），上传、预览、校验都是真的，最后一步不落库。
+上面说的都是真授权，总部管理员那套系统管理按钮点下去是真会执行的。所以线上另外挂了一道闸门（`CrmDemo:ReadOnly`）：除登录和导入外，一切非 GET 返回 `403` / `41002`。按钮照常渲染、照常点，只是够不着数据库。三个试用账号的密码就写在 README 里（超管不公开），公开演示靠的是这道闸门，不是密码。唯一放行的写路径是导入向导，它跑 dry-run（`CrmDemo:ImportDryRun=true`），上传、预览、校验都是真的，最后一步不落库。
 
 ## 自己跑一遍
 

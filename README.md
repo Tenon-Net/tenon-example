@@ -29,7 +29,7 @@ Log in to the [live demo](https://tenonadmin.52moyu.net/login) with any account 
 | `总部管理员` (HQ admin) | `Trial@123456` | Every organization | 214 | CRM + the whole system console |
 | `华南区域经理` (South China manager) | `Trial@123456` | South China region and its branches | 128 | CRM only |
 | `深圳专员` (Shenzhen specialist) | `Trial@123456` | Shenzhen branch only | 42 | CRM only |
-| `superAdmin` | `TenonExample@675b52d8` | Unrestricted | 214 | Every module, every button |
+| `superAdmin` | not published (locally: whatever `TenonAdmin:Seed:AdminPassword` says) | Unrestricted | 214 | Every module, every button |
 
 ![HQ admin sees all 214 rows](docs/assets/hq-admin-214.png)
 ![South China manager sees 128 rows](docs/assets/south-manager-128.png)
@@ -37,7 +37,7 @@ Log in to the [live demo](https://tenonadmin.52moyu.net/login) with any account 
 
 Three numbers, one endpoint, one piece of frontend code — and the `CustomerService` behind it doesn't contain a single organization filter. The kernel attaches that filter outside your business code entirely. [One query, three numbers](docs/showcase-multi-org-data-scope.md) (in Chinese) walks through where it attaches, and why that's worth far more than saving a few lines.
 
-The first three accounts hold read-only permissions on the customer endpoints, so the add/edit/delete buttons never render at all. HQ admin additionally holds the kernel's full system-management menu through ordinary role grants, not a super-admin bypass. The login page has one-click buttons for all four, so nobody has to type a password.
+The three trial accounts hold read-only permissions on the customer endpoints, so the add/edit/delete buttons never render at all. HQ admin additionally holds the kernel's full system-management menu through ordinary role grants, not a super-admin bypass — that path is exactly what this repo is here to show, which is why `superAdmin` sits out the live demo: it bypasses `[RolePermission]`, so publishing its password would hand every visitor a super admin. The login page has one-click buttons for the three, so nobody has to type a password.
 
 ## 🚀 Running it
 
@@ -78,9 +78,9 @@ The dev server proxies the API and the OpenAPI contract to `http://localhost:510
 
 Customer import is **dry-run** by default (`CrmDemo:ImportDryRun=true`): trial accounts can complete upload / preview / validate / commit, and the commit result is clearly marked as not written to the database. Export uses the same query as the list and still respects data scope.
 
-The public deploy additionally turns on `CrmDemo:ReadOnly` (`DemoReadOnlyFilter`): every non-GET except login and import returns `403` / `41002`. Menus, buttons and forms still render and still respond — they just can't reach the database. **The four passwords above are public; what protects the live demo is this gate, not the passwords.** Don't substitute the kernel's `TenonAdmin:DemoMode` for it: that one has no allowlist and would block the import POSTs too.
+The public deploy additionally turns on `CrmDemo:ReadOnly` (`DemoReadOnlyFilter`): every non-GET except login and import returns `403` / `41002`. Menus, buttons and forms still render and still respond — they just can't reach the database. **The three trial passwords above are public; what protects the live demo is this gate, not the passwords.** Don't substitute the kernel's `TenonAdmin:DemoMode` for it: that one has no allowlist and would block the import POSTs too.
 
-Locally `ReadOnly` defaults to `false`, so all four accounts really can add, edit and delete; set `ImportDryRun` to `false` as well and import writes for real.
+Locally `ReadOnly` defaults to `false`, so all four accounts (super admin included) really can add, edit and delete; set `ImportDryRun` to `false` as well and import writes for real.
 
 ## 📌 Version alignment
 
