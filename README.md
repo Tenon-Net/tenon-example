@@ -78,7 +78,9 @@ The dev server proxies the API and the OpenAPI contract to `http://localhost:510
 
 Customer import is **dry-run** by default (`CrmDemo:ImportDryRun=true`): trial accounts can complete upload / preview / validate / commit, and the commit result is clearly marked as not written to the database. Export uses the same query as the list and still respects data scope.
 
-Global `TenonAdmin:DemoMode=true` blocks **every** non-GET (including import POSTs), which fights the import wizard. For the public deploy, keep DemoMode **off** and rely on: no add/update/delete grants for trial roles + import dry-run. Set `ImportDryRun` to `false` only when you want real inserts locally.
+The public deploy additionally turns on `CrmDemo:ReadOnly` (`DemoReadOnlyFilter`): every non-GET except login and import returns `403` / `41002`. Menus, buttons and forms still render and still respond — they just can't reach the database. **The four passwords above are public; what protects the live demo is this gate, not the passwords.** Don't substitute the kernel's `TenonAdmin:DemoMode` for it: that one has no allowlist and would block the import POSTs too.
+
+Locally `ReadOnly` defaults to `false`, so all four accounts really can add, edit and delete; set `ImportDryRun` to `false` as well and import writes for real.
 
 ## 📌 Version alignment
 

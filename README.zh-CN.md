@@ -78,7 +78,9 @@ dev server 会把 API 和 OpenAPI 契约代理到 `http://localhost:5100`。`npm
 
 客户导入走 **dry-run**（`CrmDemo:ImportDryRun`，默认 `true`）：试用账号可以完整走上传 / 预览 / 校验 / 提交，提交结果会标明「未写入数据库」，避免脏数据。导出与列表同源，仍受数据权限过滤。
 
-全局 `TenonAdmin:DemoMode=true` 会拦掉**所有**非 GET（含导入 POST），和导入体验冲突。公开部署请**关掉 DemoMode**，写操作靠：试用账号不授增删改权限 + 导入 dry-run。本地 dogfood 真落库时把 `ImportDryRun` 设为 `false`。
+公开部署另外打开 `CrmDemo:ReadOnly`（`DemoReadOnlyFilter`）：除登录和导入外，一切非 GET 返回 `403` / `41002`。菜单、按钮、表单照常渲染，点得动，只是写不进库——**上面四个账号的密码是公开的，线上就是靠这道闸门而不是靠密码**。别用内核的 `TenonAdmin:DemoMode` 代替它：那个没有放行名单，会把导入 POST 一起拦掉。
+
+本地默认 `ReadOnly=false`，四个账号的增删改查都是真的；再把 `ImportDryRun` 设为 `false`，导入也会真的落库。
 
 ## 📌 版本对齐
 

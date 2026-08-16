@@ -40,7 +40,7 @@ public virtual async Task<PagedList<Customer>> PageAsync(CustomerPageInput input
 
 总部管理员反过来，除了 CRM 还被授予了内核自带的整套系统管理菜单：组织、用户、角色、菜单、字典、配置、日志、文件，所有按钮都在。它走的是和真实项目一样的角色授权，`superAdmin` 那条绕过路径没参与。这也是这个仓库想说明的第二件事：它演示的是内核完整的后台能力，CRM 只是长在上面的第一个业务模块。
 
-线上这份开了 `TenonAdmin:DemoMode=true`，按钮点下去会被服务端拒绝（`403`，错误码 `41002`），超管也一样。这是唯一一处「看得见做不了」，为的是这个演示能公开给陌生人随便点。
+上面说的都是真授权，总部管理员那套系统管理按钮点下去是真会执行的。所以线上另外挂了一道闸门（`CrmDemo:ReadOnly`）：除登录和导入外，一切非 GET 返回 `403` / `41002`。按钮照常渲染、照常点，只是够不着数据库。四个账号的密码就写在 README 里，公开演示靠的是这道闸门，不是密码。唯一放行的写路径是导入向导，它跑 dry-run（`CrmDemo:ImportDryRun=true`），上传、预览、校验都是真的，最后一步不落库。
 
 ## 自己跑一遍
 
@@ -50,6 +50,6 @@ cd tenon-example
 docker compose up -d --build
 ```
 
-不想装 Docker 就按 [README](../README.zh-CN.md) 的后端和前端两节走，`dotnet run` 加 `npm run dev`，默认 SQLite，不用先准备数据库。本地不开 `DemoMode`，四个账号的增删改查都真的能点、真的落库，可以自己改一条客户数据再换个账号看它消不消失。
+不想装 Docker 就按 [README](../README.zh-CN.md) 的后端和前端两节走，`dotnet run` 加 `npm run dev`，默认 SQLite，不用先准备数据库。本地用超管登录，增删改查都真的能点、真的落库，可以自己改一条客户数据再换个账号看它消不消失；把 `CrmDemo:ImportDryRun` 设成 `false`，导入也会真的写进去。
 
-线上那份和你克隆下来的是同一份代码，区别只有一个服务器本地的 `docker-compose.override.yml` 把 `DemoMode` 打开了。部署、备份和回滚记录在[执行台账](app-ledger.md)的 P4。
+线上那份和你克隆下来的是同一份代码，区别只在服务器本地那两个不进 git 的文件：`.env` 放密钥和端口，`docker-compose.override.yml` 把 `CrmDemo__ReadOnly` 打开。部署、备份和回滚记录在[执行台账](app-ledger.md)的 P4。
