@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TenonAdmin.AspNetCore;
 using TenonAdmin.Excel;
@@ -35,6 +36,10 @@ builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmMenu
 builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmRoleMenuSeed>());
 builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmHqAdminSystemMenuSeed>());
 builder.Services.TryAddEnumerable(ServiceDescriptor.Transient<ISeedData, CrmCustomerSeed>());
+
+// 公开演示的写入闸门。内核的 TenonAdmin:DemoMode 没有放行名单,会把导入向导也拦掉,所以这里自己拦。
+if (builder.Configuration.GetValue<bool>($"{CrmDemoOptions.SectionName}:{nameof(CrmDemoOptions.ReadOnly)}"))
+    builder.Services.Configure<MvcOptions>(o => o.Filters.Add<DemoReadOnlyFilter>());
 
 var app = builder.Build();
 app.MapTenonAdmin();
